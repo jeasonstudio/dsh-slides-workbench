@@ -2,7 +2,7 @@
 // 视觉参考媒体工作台的「灵感墙」：环境渐变 + 卡片微交互，但布局是稳定的。
 import React from 'react'
 import { createDeck, startAgent, thumbUrl } from './api.js'
-import { t } from './i18n.js'
+import { formatWhen, t } from './i18n.js'
 import { Icon, Spinner } from './ui.jsx'
 
 /**
@@ -133,30 +133,37 @@ export function HomeView({ state, onOpen, onBrowse }) {
                 '--x': `${spot.x}%`,
                 '--y': `${spot.y}%`,
                 '--r': `${spot.r}deg`,
-                '--d': `${80 + index * 55}ms`,
+                '--d': String(0.45 + ((index * 7) % 11) / 18),
+                '--delay': `${70 + index * 65}ms`,
               }}
               onClick={() => onOpen(deck.id)}
               title={deck.title || deck.id}
             >
-              <span className="sw-tile-frame">
-                <span className={`sw-tile-art is-${toneOf(deck.id)}`} aria-hidden="true">
-                  <span className="sw-tile-art-eyebrow">DeepSeek Harness</span>
-                  <span className="sw-tile-art-title">{deck.title || deck.id}</span>
-                  <span className="sw-tile-art-foot">
-                    <span className="sw-tile-art-rule" />
-                    <span className="sw-tile-art-page">{String(deck.pages || 1).padStart(2, '0')}</span>
+              <span className="sw-tile-card">
+                <span className="sw-tile-media">
+                  <span className={`sw-tile-art is-${toneOf(deck.id)}`} aria-hidden="true">
+                    <span className="sw-tile-art-eyebrow">DeepSeek Harness</span>
+                    <span className="sw-tile-art-title">{deck.title || deck.id}</span>
                   </span>
+                  <img
+                    className="sw-tile-shot"
+                    src={`${thumbUrl(deck.id, deck.updatedAt)}&n=${shotNonce}`}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    draggable={false}
+                    onError={() => setMissing((prev) => (prev[deck.id] ? prev : { ...prev, [deck.id]: true }))}
+                  />
                 </span>
-                <img
-                  className="sw-tile-shot"
-                  src={`${thumbUrl(deck.id, deck.updatedAt)}&n=${shotNonce}`}
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                  onError={() => setMissing((prev) => (prev[deck.id] ? prev : { ...prev, [deck.id]: true }))}
-                />
+                <span className="sw-tile-caption">
+                  <span className="sw-tile-title">{deck.title || deck.id}</span>
+                </span>
+                <span className="sw-tile-foot">
+                  <span className={`sw-tile-dot is-${toneOf(deck.id)}`} aria-hidden="true" />
+                  <span className="sw-tile-source">{t('home.pages', { n: deck.pages || 1 })}</span>
+                  <span className="sw-tile-time">{deck.updatedAt ? formatWhen(deck.updatedAt) : ''}</span>
+                </span>
               </span>
-              <span className="sw-tile-title">{deck.title || deck.id}</span>
             </button>
           )
         })}

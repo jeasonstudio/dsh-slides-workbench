@@ -122,6 +122,8 @@ export default {
 
     async function state() {
       const [workspaceStatus, deckRows] = await Promise.all([workspace.status(), listDecks()])
+      // 顺手把缩略图排进后台队列，下次打开首页就有图
+      thumbs.warm(deckRows)
       return {
         version,
         workspace: workspaceStatus,

@@ -57,6 +57,19 @@ export class Thumbs {
     return null
   }
 
+  /**
+   * 后台预热：把最近的这些 deck 排队截一遍，用户打开首页时直接有图。
+   * @param {Array<{id: string}>} rows - deck 列表（按最近排序）。
+   * @param {number} [limit] - 最多预热几张。
+   * @returns {void}
+   */
+  warm(rows, limit = 8) {
+    if (this.dev.phase !== 'running' || !this.browser) return
+    for (const row of (rows ?? []).slice(0, limit)) {
+      if (this.decks.isValidId(row.id)) this.enqueue(row.id)
+    }
+  }
+
   /** 串行排队：一次只截一张，别把机器打满。 */
   enqueue(id) {
     if (this.pending.has(id)) return
