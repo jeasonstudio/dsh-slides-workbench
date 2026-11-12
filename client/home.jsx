@@ -1,19 +1,48 @@
 // 工作台首页：中间一个输入框，周围一圈 slide 卡片（固定轨道，不做无限拖动）。
 // 视觉参考媒体工作台的「灵感墙」：环境渐变 + 卡片微交互，但布局是稳定的。
 import React from 'react'
-import { createDeck, deckThumbUrl, startAgent } from './api.js'
+import { createDeck, startAgent } from './api.js'
 import { t } from './i18n.js'
 import { Icon, Spinner } from './ui.jsx'
 
-/** 卡片的固定轨道（相对舞台的百分比中心点 + 轻微旋转）。 */
-const ORBIT = [
-  { x: 15, y: 20, r: -6, s: 1 },
-  { x: 9, y: 62, r: 4, s: 0.94 },
-  { x: 22, y: 84, r: -3, s: 0.9 },
-  { x: 85, y: 18, r: 5, s: 1 },
-  { x: 91, y: 58, r: -4, s: 0.95 },
-  { x: 78, y: 84, r: 3, s: 0.9 },
-]
+/**
+ * 固定轨道：左右两列、竖向均分，越靠中间越靠里一点，形成一圈但不占满。
+ * @param {number} count - 要摆几张。
+ * @returns {Array<{x: number, y: number, r: number, s: number}>} 每张的中心点（%）和微旋转/缩放。
+ */
+function orbitFor(count) {
+  const rows = Math.max(1, Math.ceil(count / 2))
+  const spots = []
+  for (let index = 0; index < count; index += 1) {
+    const side = index % 2 === 0 ? -1 : 1
+    const row = Math.floor(index / 2)
+    const y = rows === 1 ? 50 : 8 + (row * 84) / (rows - 1)
+    const inward = row % 2 === 0 ? 0 : 3.5
+    spots.push({
+      x: side < 0 ? 13 + inward : 87 - inward,
+      y,
+      r: ((index % 3) - 1) * 3,
+      s: 0.82 + (index % 2) * 0.06,
+    })
+  }
+  return spots
+}
+
+/** 根据 deck id 选一个预设封面基调（纯 CSS，不加载任何图片）。 */
+function toneOf(id) {
+  let hash = 0
+  for (let i = 0; i < id.length; i += 1) hash = (hash * 31 + id.charCodeAt(i)) | 0
+  return ['ink', 'violet', 'mint', 'amber'][Math.abs(hash) % 4]
+}
+
+/** 空 deck（没写内容的一页 Untitled）不上墙。 */
+function isMeaningful(deck) {
+  if (!deck || deck.error) return false
+  const title = String(deck.title ?? '').trim()
+  const generic = !title || /^untitled/i.test(title) || title === deck.id
+  if (generic && (deck.pages ?? 0) <= 1) return false
+  return true
+}
 
 /** 三个起点：点一下把对应的话填进输入框。 */
 const TEMPLATES = [
@@ -83,15 +112,15 @@ export function HomeView({ state, onOpen, onBrowse }) {
     inputRef.current?.focus()
   }
 
-  const tiles = decks.slice(0, ORBIT.length)
+  const visible = decks.filter(isMeaningful)
+  const tiles = visible.slice(0, 10)
+  const spots = orbitFor(tiles.length)
 
   return (
     <div className="sw-home" ref={stageRef}>
-      <div className="sw-home-ambient" aria-hidden="true"><i /><i /><i /></div>
-
       <div className="sw-home-stage">
         {tiles.map((deck, index) => {
-          const spot = ORBIT[index]
+          const spot = spots[index]
           return (
             <button
               key={deck.id}
@@ -102,20 +131,18 @@ export function HomeView({ state, onOpen, onBrowse }) {
                 '--y': `${spot.y}%`,
                 '--r': `${spot.r}deg`,
                 '--s': String(spot.s),
-                '--d': `${120 + index * 70}ms`,
+                '--d': `${90 + index * 45}ms`,
               }}
               onClick={() => onOpen(deck.id)}
               title={deck.title || deck.id}
             >
-              <span className="sw-tile-thumb">
-                <iframe
-                  title={deck.title || deck.id}
-                  src={deckThumbUrl(state, deck.id)}
-                  loading="lazy"
-                  tabIndex={-1}
-                  aria-hidden="true"
-                  scrolling="no"
-                />
+              <span className={`sw-tile-art is-${toneOf(deck.id)}`} aria-hidden="true">
+                <span className="sw-tile-art-eyebrow">DeepSeek Harness</span>
+                <span className="sw-tile-art-title">{deck.title || deck.id}</span>
+                <span className="sw-tile-art-foot">
+                  <span className="sw-tile-art-rule" />
+                  <span className="sw-tile-art-page">{String(deck.pages || 1).padStart(2, '0')}</span>
+                </span>
               </span>
               <span className="sw-tile-meta">
                 <span className="sw-tile-title">{deck.title || deck.id}</span>
@@ -157,7 +184,7 @@ export function HomeView({ state, onOpen, onBrowse }) {
       </div>
 
       <footer className="sw-home-foot">
-        <span className="sw-hint">{decks.length ? t('home.recent', { n: decks.length }) : t('home.empty')}</span>
+        <span className="sw-hint">{visible.length ? t('home.recent', { n: visible.length }) : t('home.empty')}</span>
         <button type="button" className="sw-home-browse" onClick={onBrowse}>
           {t('home.browse')}<Icon name="arrowRight" size={14} />
         </button>
