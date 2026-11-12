@@ -68,6 +68,25 @@ const http = {
   state: () => request('state'),
   setup: () => request('setup', {}),
   server: (action) => request('server', { action }),
+  createDeck: (title) => request('deck/create', { title }),
+}
+
+/** 直接和 agent 桥说话的几条路径（/__agent 由插件接管，同源）。 */
+const agent = {
+  createSession: (slideId) => call('/__agent/sessions', { provider: 'claude', slideId }),
+  send: (id, text) => call(`/__agent/sessions/${encodeURIComponent(id)}/messages`, { text }),
+}
+
+async function call(path, body) {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+    credentials: 'same-origin',
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`)
+  return data
 }
 
 // ---- 轮询 ----
@@ -181,9 +200,39 @@ export function serverBase(state = snapshot.state) {
  * @param {object} state - /state 快照。
  * @returns {string} iframe 地址。
  */
-export function appUrl(state = snapshot.state) {
+export function appUrl(state = snapshot.state, route = '') {
   const at = Number(state?.server?.startedAt) || 0
-  return `${APP_PREFIX}/?v=${at}`
+  const path = String(route || '').replace(/^\/+/, '').replace(/\/+$/, '')
+  return `${APP_PREFIX}/${path}?v=${at}`
+}
+
+/**
+ * 首页卡片用的单页预览地址（open-slide 的干净预览路由，会把画布等比缩到 iframe 大小）。
+ * @param {object} state - /state 快照。
+ * @param {string} id - deck id。
+ * @param {number} [page] - 第几页，从 1 开始。
+ * @returns {string} iframe 地址。
+ */
+export function deckThumbUrl(state = snapshot.state, id, page = 1) {
+  const at = Number(state?.server?.startedAt) || 0
+  return `${APP_PREFIX}/s/${encodeURIComponent(id)}/preview?p=${Math.max(1, page)}&v=${at}`
+}
+
+/** 新建一个 deck，返回 deck 行。 */
+export async function createDeck(title) {
+  const data = await http.createDeck(title)
+  return data?.deck ?? null
+}
+
+/** 把一句话需求发进新建的 deck 对话（失败不阻塞：先让人看到页面）。 */
+export async function startAgent(deckId, text) {
+  try {
+    const session = await agent.createSession(deckId)
+    await agent.send(session.id, text)
+    return session
+  } catch {
+    return null
+  }
 }
 
 /**

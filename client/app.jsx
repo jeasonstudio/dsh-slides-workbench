@@ -7,8 +7,8 @@ import { injectEmbedStyle, watchBrandLogo, watchDragRegion } from './embed.js'
 import { lang, subscribeLang, t } from './i18n.js'
 import { IconButton, Spinner } from './ui.jsx'
 
-export function AppFrame({ state, title }) {
-  const url = appUrl(state)
+export function AppFrame({ state, title, route = '', onHome }) {
+  const url = appUrl(state, route)
   const frameRef = React.useRef(null)
   // 手动重载：换 key 让 iframe 重新挂载
   const [nonce, setNonce] = React.useState(0)
@@ -104,6 +104,7 @@ export function AppFrame({ state, title }) {
         onLoad={onLoad}
       />
       <div className="sw-app-actions">
+        {onHome ? <IconButton icon="home" label={t('frame.home')} onClick={onHome} /> : null}
         <IconButton icon="refresh" label={t('frame.reload')} onClick={reload} />
         <IconButton icon="external" label={t('frame.openExternal')} onClick={openExternal} />
       </div>

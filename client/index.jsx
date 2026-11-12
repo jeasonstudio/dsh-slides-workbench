@@ -6,6 +6,7 @@
 // 没有 children 或展开态，所以侧栏做不出「可展开的父级菜单」。
 import React from 'react'
 import { AppFrame } from './app.jsx'
+import { HomeView } from './home.jsx'
 import { getSnapshot, refresh, useSnapshot, watchState } from './api.js'
 import { setHostLang, subscribeLang, t, useLang } from './i18n.js'
 import { ServerView, SetupView } from './setup.jsx'

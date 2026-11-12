@@ -20,6 +20,9 @@ const PATHS = {
   expand: 'M14 5h5v5M10 19H5v-5M19 5l-6 6M5 19l6-6',
   slides: 'M3 5h18v12H3zM8 21h8M12 17v4',
   warn: 'M12 4l9 16H3zM12 10v4M12 17h.01',
+  arrowUp: 'M12 19V5M6 11l6-6 6 6',
+  arrowRight: 'M5 12h14M13 6l6 6-6 6',
+  home: 'M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z',
 }
 
 export function Icon({ name, size = 16, stroke = 1.6 }) {

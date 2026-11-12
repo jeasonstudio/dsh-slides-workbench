@@ -22,6 +22,10 @@
    `open-slide:locale`（`zh-CN` / `en`）并让它重载一次。所以不需要在两边各调一遍。
 3. **把「做 deck」这件事交给 agent** —— 注册 8 个 `slides_*` 工具和 2 个 skill，模型在会话里就能建 deck、写页面、写讲稿、构建导出。
 
+打开面板先是工作台**首页**：中间一个输入框，说一句「帮我做一个关于 X 的演示」，它会新建 deck、
+开好 DSH 对话并直接进编辑器；周围一圈是最近的 deck 预览卡片（固定轨道，不做无限拖拽），
+点一张就进去。右下角「浏览全部幻灯片」进 open-slide 自己的列表页。
+
 ![open-slide 的 deck 浏览页](docs/assets/workbench-decks.jpg)
 
 <sub>点开「演示文稿」首先是 open-slide 的 deck 浏览页：`+ New deck`、卡片、搜索、Newest 排序都是它自己的功能，只是左边那列导航没有了。</sub>
