@@ -11,15 +11,17 @@ import { Icon, Spinner } from './ui.jsx'
  */
 const WALL = [
   // 上沿：两张 xl 切边，中间几张完整
-  { x: 2, y: 9, size: 'xl', r: -8 },
-  { x: 20, y: 12, size: 'sm', r: 5 },
-  { x: 36, y: 8, size: 'md', r: -4 },
-  { x: 66, y: 9, size: 'md', r: 6 },
-  { x: 88, y: 12, size: 'sm', r: -5 },
-  { x: 99, y: 8, size: 'xl', r: 4 },
+  { x: 2, y: 11, size: 'xl', r: -8 },
+  { x: 20, y: 14, size: 'sm', r: 5 },
+  { x: 36, y: 10, size: 'md', r: -4 },
+  { x: 66, y: 11, size: 'md', r: 6 },
+  { x: 88, y: 14, size: 'sm', r: -5 },
+  { x: 99, y: 10, size: 'xl', r: 4 },
   // 中段：贴着输入框两侧，把上下填实
   { x: 9, y: 34, size: 'md', r: 4 },
   { x: 91, y: 33, size: 'md', r: -6 },
+  { x: 12, y: 50, size: 'sm', r: -5 },
+  { x: 88, y: 52, size: 'sm', r: 4 },
   { x: 5, y: 63, size: 'lg', r: 7 },
   { x: 95, y: 65, size: 'lg', r: -3 },
   // 下沿：切出画面底部
