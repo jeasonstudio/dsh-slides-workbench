@@ -130,7 +130,6 @@ function loadParser(workspace) {
       // 换下一个位置
     }
   }
-  loadParser.cache = null
   return null
 }
 
@@ -246,7 +245,7 @@ export function parseDeckSource(source, workspace) {
 
 /** JSX 文本 / JS 单引号字符串里的安全转义。 */
 function quote(text) {
-  return String(text).replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+  return String(text).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r/g, '\\r').replace(/\n/g, '\\n')
 }
 
 function escapeJsx(text) {
@@ -416,10 +415,17 @@ export class Decks {
     if (preferredId && !this.isValidId(id)) throw httpError('id 只能是小写字母、数字和连字符', 400)
     if (!id) id = `deck-${Date.now().toString(36).slice(-5)}`
     if (!this.isValidId(id)) throw httpError('标题生成不出合法的目录名，请手动指定 id', 400)
+    await mkdir(this.workspace.slidesDir, { recursive: true })
     let candidate = id
-    for (let n = 2; existsSync(this.deckDir(candidate)); n += 1) {
-      candidate = `${id}-${n}`
+    for (let n = 1; ; n += 1) {
       if (n > 60) throw httpError('同名 deck 太多了，请换个标题', 409)
+      if (n > 1) candidate = `${id.slice(0, MAX_ID - String(n).length - 1).replace(/-$/, '')}-${n}`
+      try {
+        await mkdir(this.deckDir(candidate))
+        break
+      } catch (err) {
+        if (err?.code !== 'EEXIST') throw err
+      }
     }
     id = candidate
     await mkdir(join(this.deckDir(id), 'assets'), { recursive: true })
@@ -443,9 +449,15 @@ export class Decks {
     if (parsed.error) throw httpError(parsed.error, 400)
     await mkdir(this.deckDir(id), { recursive: true })
     const target = this.deckFile(id)
-    const temp = join(this.deckDir(id), `.index.tsx.${process.pid}.tmp`)
-    await writeFile(temp, text, 'utf8')
-    await rename(temp, target)
+    const { randomUUID } = await import('node:crypto')
+    const { rm } = await import('node:fs/promises')
+    const temp = join(this.deckDir(id), `.index.tsx.${process.pid}.${randomUUID()}.tmp`)
+    try {
+      await writeFile(temp, text, { encoding: 'utf8', flag: 'wx' })
+      await rename(temp, target)
+    } finally {
+      await rm(temp, { force: true }).catch(() => {})
+    }
     return { deck: await this.describe(id), warnings: parsed.warnings }
   }
 

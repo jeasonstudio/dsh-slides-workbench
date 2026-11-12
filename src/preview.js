@@ -10,9 +10,9 @@ const READY_POLL_MS = 350
 const PORT_RANGE = 40
 
 /** 端口是否空闲（本机 127.0.0.1）。 */
-function portFree(port) {
-  return new Promise((resolvePromise) => {
-    const socket = createConnection({ port, host: '127.0.0.1' })
+async function portFree(port) {
+  const available = await Promise.all(['127.0.0.1', '::1'].map(host => new Promise((resolvePromise) => {
+    const socket = createConnection({ port, host })
     const done = (free) => {
       socket.removeAllListeners()
       socket.destroy()
@@ -20,9 +20,10 @@ function portFree(port) {
     }
     socket.setTimeout(400)
     socket.once('connect', () => done(false))
-    socket.once('timeout', () => done(true))
-    socket.once('error', () => done(true))
-  })
+    socket.once('timeout', () => done(false))
+    socket.once('error', (err) => done(['ECONNREFUSED', 'EAFNOSUPPORT', 'EADDRNOTAVAIL', 'ENETUNREACH'].includes(err.code)))
+  })))
+  return available.every(Boolean)
 }
 
 /** 探测 dev server 是否已经能响应（localhost 可能解析到 ::1）。 */

@@ -308,7 +308,14 @@ export default {
 
     // Vite 的 HMR WebSocket：路径带 base 前缀，带不带尾斜杠都接一下
     for (const path of [APP_PREFIX, `${APP_PREFIX}/`]) {
-      ctx.effect(() => ctx.webServer.registerUpgrade({ path, handler: proxyUpgrade }), `dsh-slides-workbench: hmr ${path}`)
+      ctx.effect(() => ctx.webServer.registerUpgrade({ path, handler: (req, socket, head) => {
+        const rejection = requestRejection(ctx, req)
+        if (rejection) {
+          socket.end(`HTTP/1.1 ${rejection} ${rejection === 401 ? 'Unauthorized' : 'Forbidden'}\r\nConnection: close\r\nContent-Length: 0\r\n\r\n`)
+          return
+        }
+        proxyUpgrade(req, socket, head)
+      } }), `dsh-slides-workbench: hmr ${path}`)
     }
 
     // 插件卸载时把 dev server 和 agent SSE 收掉，不留孤儿

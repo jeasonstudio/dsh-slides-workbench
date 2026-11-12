@@ -84,7 +84,7 @@ export function ServerView() {
           <Button variant="primary" icon="refresh" onClick={() => startServer()} disabled={busy || starting}>
             {starting ? <><Spinner size={13} />{t('status.starting')}</> : actionLabel}
           </Button>
-          {starting ? <Button variant="ghost" onClick={stopServer} disabled={busy}>{t('server.actionStop')}</Button> : null}
+          {starting ? <Button variant="ghost" onClick={stopServer}>{t('server.actionStop')}</Button> : null}
         </div>
         <LogView title={t('server.logTitle')} lines={server.log} live={starting} error={failed ? server.error : null} />
         <p className="sw-hint">{t('server.hint')}</p>

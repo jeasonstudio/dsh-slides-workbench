@@ -182,6 +182,7 @@ export function registerTools(ctx, deps) {
       let deck
       try {
         deck = await decks.create(title, preferredId)
+        if (serverSnapshot(dev)?.status === 'running') dev.restart().catch(() => {})
       } catch (error) {
         throw new Error(`创建 deck 失败：${errorText(error)}`)
       }
@@ -262,6 +263,7 @@ export function registerTools(ctx, deps) {
       let result
       try {
         result = await decks.remove(id)
+        if (serverSnapshot(dev)?.status === 'running') dev.restart().catch(() => {})
       } catch (error) {
         throw new Error(`删除 deck "${id}" 失败：${errorText(error)}`)
       }
