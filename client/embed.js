@@ -19,8 +19,15 @@ export function injectEmbedStyle(doc) {
    deck 编辑器（/s/<id>）的页面缩略图列是另一个结构，不要动。 */
 div.h-dvh > div.hidden.md\\:block:has(> aside.group\\/side) { display: none !important; }
 
-/* 首页内容外面那层大圆角卡片（md:rounded-[10px] + ring + shadow-edge）去掉。
-   这个类只有 deck 列表页在用（编辑器里没有），所以按类名+背景一起限定即可。 */
+/* 首页外壳：整页统一背景。
+   open-slide 的首页是「bg-sidebar 的底 + 8px 内边距 + bg-background 的内容卡片」，
+   所以去掉内容卡片的圆角/描边还不够，外圈那 8px 会露出略深的底色，看着仍像一张卡片。
+   这里把外壳底色拉成 --background，并把内边距清零，整页就是一个颜色。 */
+div.h-dvh:not(.flex-col) { background-color: var(--background) !important; }
+div.h-dvh:not(.flex-col) > div[class*="md:py-2"][class*="md:pr-2"] { padding: 0 !important; }
+
+/* 首页内容那张卡片本身（md:rounded-[10px] + ring + shadow-edge）也摊平；
+   这个类只有 deck 列表页在用（编辑器里没有），按类名+背景一起限定即可。 */
 div[class*="md:rounded-[10px]"][class*="bg-background"] {
   border-radius: 0 !important;
   box-shadow: none !important;
