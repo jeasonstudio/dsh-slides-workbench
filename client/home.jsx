@@ -10,26 +10,37 @@ import { Icon, Spinner } from './ui.jsx'
  * 上下也用大卡片压住，避免中间输入框上下太空。位置固定，不跟随鼠标。
  */
 const WALL = [
-  // 上沿：两张 xl 切边，中间几张完整
-  { x: 2, y: 11, size: 'xl', r: -8 },
-  { x: 20, y: 14, size: 'sm', r: 5 },
-  { x: 36, y: 10, size: 'md', r: -4 },
-  { x: 66, y: 11, size: 'md', r: 6 },
-  { x: 88, y: 14, size: 'sm', r: -5 },
-  { x: 99, y: 10, size: 'xl', r: 4 },
-  // 中段：贴着输入框两侧，把上下填实
-  { x: 9, y: 34, size: 'md', r: 4 },
-  { x: 91, y: 33, size: 'md', r: -6 },
-  { x: 12, y: 50, size: 'sm', r: -5 },
-  { x: 88, y: 52, size: 'sm', r: 4 },
-  { x: 5, y: 63, size: 'lg', r: 7 },
-  { x: 95, y: 65, size: 'lg', r: -3 },
-  // 下沿：切出画面底部
-  { x: 23, y: 88, size: 'sm', r: -3 },
-  { x: 43, y: 93, size: 'md', r: 4 },
-  { x: 63, y: 88, size: 'md', r: -5 },
-  { x: 82, y: 93, size: 'lg', r: 3 },
+  // 上沿（左右各一张切出去）
+  { x: 1, y: 9, size: 'xl', r: -8 },
+  { x: 27, y: 13, size: 'sm', r: 5 },
+  { x: 70, y: 11, size: 'md', r: -5 },
+  { x: 99, y: 8, size: 'lg', r: 4 },
+  // 中段（贴着输入框两侧，留出呼吸）
+  { x: 7, y: 40, size: 'md', r: 6 },
+  { x: 93, y: 39, size: 'md', r: -7 },
+  { x: 98, y: 65, size: 'xl', r: 3 },
+  // 下沿
+  { x: 17, y: 88, size: 'sm', r: -4 },
+  { x: 41, y: 93, size: 'md', r: 5 },
+  { x: 62, y: 90, size: 'sm', r: -3 },
+  { x: 81, y: 94, size: 'lg', r: 4 },
+  { x: 2, y: 70, size: 'sm', r: -6 },
 ]
+
+/**
+ * 顺时针次序：从正上方开始，按角度排。
+ * @param {{x: number, y: number}} spot - 卡片中心（%）。
+ * @returns {number} 相对正上方的顺时针角度（0–360）。
+ */
+function clockAngle(spot) {
+  const deg = (Math.atan2(spot.x - 50, -(spot.y - 50)) * 180) / Math.PI
+  return (deg + 360) % 360
+}
+
+/** 每个位置在第几个出现（顺时针小时间差）。 */
+const CLOCK_ORDER = WALL.map((spot, index) => ({ index, angle: clockAngle(spot) }))
+  .sort((a, b) => a.angle - b.angle)
+  .reduce((map, item, rank) => map.set(item.index, rank), new Map())
 
 /** 根据 deck id 选一个预设封面基调（纯 CSS，不加载任何图片）。 */
 function toneOf(id) {
@@ -100,7 +111,60 @@ export function HomeView({ state, onOpen, onBrowse }) {
   }
 
   const visible = decks.filter(isMeaningful)
-  const tiles = visible.slice(0, WALL.length)
+  const [stage, setStage] = React.useState({ w: 0, h: 0 })
+  const [luma, setLuma] = React.useState({})
+  const stageRef = React.useRef(null)
+
+  // 量一下舞台，用来把「卡片最终位置」换算成相对中心的位移
+  React.useLayoutEffect(() => {
+    const node = stageRef.current
+    if (!node) return undefined
+    const measure = () => {
+      const rect = node.getBoundingClientRect()
+      setStage({ w: rect.width, h: rect.height })
+    }
+    measure()
+    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null
+    observer?.observe(node)
+    return () => observer?.disconnect()
+  }, [])
+
+  /** 缩到 1px 取平均亮度，用来把明/暗卡片交替摆开，别整面墙都是黑的。 */
+  const onShotLoad = (event, id) => {
+    const img = event.currentTarget
+    try {
+      const canvas = document.createElement('canvas')
+      canvas.width = 1
+      canvas.height = 1
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0, 1, 1)
+      const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data
+      const value = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
+      setLuma((prev) => (prev[id] === undefined ? { ...prev, [id]: value } : prev))
+    } catch {
+      // canvas 被安全策略拦了就算了，按原顺序摆
+    }
+  }
+
+  const arranged = React.useMemo(() => {
+    const list = visible.slice(0, WALL.length)
+    const known = list.filter((deck) => luma[deck.id] !== undefined)
+    if (known.length < list.length) return list
+    const sorted = [...list].sort((a, b) => luma[b.id] - luma[a.id])
+    const out = []
+    let light = 0
+    let dark = sorted.length - 1
+    let takeLight = true
+    while (out.length < sorted.length) {
+      const pick = takeLight ? sorted[light++] : sorted[dark--]
+      if (pick) out.push(pick)
+      takeLight = !takeLight
+      if (light > dark) break
+    }
+    return out
+  }, [visible, luma])
+
+  const tiles = arranged
   // 截图要等 Host 用 headless Chrome 慢慢截，没截好就先显示预设封面，过几秒再换
   const [shotNonce, setShotNonce] = React.useState(0)
   const [missing, setMissing] = React.useState({})
@@ -116,9 +180,12 @@ export function HomeView({ state, onOpen, onBrowse }) {
 
   return (
     <div className="sw-home">
-      <div className="sw-home-stage">
+      <div className="sw-home-stage" ref={stageRef}>
         {tiles.map((deck, index) => {
           const spot = WALL[index]
+          const rank = CLOCK_ORDER.get(index) ?? index
+          const dx = ((spot.x - 50) / 100) * stage.w
+          const dy = ((spot.y - 50) / 100) * stage.h
           return (
             <button
               key={deck.id}
@@ -128,7 +195,9 @@ export function HomeView({ state, onOpen, onBrowse }) {
                 '--x': `${spot.x}%`,
                 '--y': `${spot.y}%`,
                 '--r': `${spot.r}deg`,
-                '--delay': `${70 + index * 65}ms`,
+                '--dx': `${dx}`.replace(/px$/, '') + 'px',
+                '--dy': `${dy}`.replace(/px$/, '') + 'px',
+                '--delay': `${rank * 60}ms`,
               }}
               onClick={() => onOpen(deck.id)}
               title={deck.title || deck.id}
@@ -141,6 +210,7 @@ export function HomeView({ state, onOpen, onBrowse }) {
                   </span>
                   <img
                     className="sw-tile-shot"
+                    onLoad={(event) => onShotLoad(event, deck.id)}
                     src={`${thumbUrl(deck.id, deck.updatedAt)}&n=${shotNonce}`}
                     alt=""
                     loading="lazy"

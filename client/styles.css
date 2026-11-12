@@ -242,8 +242,8 @@ body[data-ds-dark-theme] .sw-root { color-scheme: dark; }
   left: var(--x);
   top: var(--y);
   width: var(--w);
-  transform: translate(-50%, -50%);
-  transition: left .6s cubic-bezier(.2, .8, .2, 1), top .6s cubic-bezier(.2, .8, .2, 1);
+  transform: translate(-50%, -50%) translate(var(--dx, 0px), var(--dy, 0px));
+  transition: transform .6s cubic-bezier(.2, .8, .2, 1);
   display: block;
   padding: 0;
   border: 0;
@@ -274,9 +274,17 @@ body[data-ds-dark-theme] .sw-root { color-scheme: dark; }
   transform: rotate(calc(var(--r) * -1.35)) translateY(-5px) scale(1.03);
   box-shadow: 0 22px 46px -14px rgba(0, 0, 0, .3);
 }
+/* 从画面中心往外扩散到自己的位置（顺序由 --delay 控制，按顺时针排） */
 @keyframes sw-card-in {
-  from { opacity: 0; transform: translate(-50%, calc(-50% + 10px)) scale(.97); }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(0px, 0px) scale(.6);
+  }
+  60% { opacity: 1; }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(var(--dx, 0px), var(--dy, 0px));
+  }
 }
 
 .sw-tile-media {
