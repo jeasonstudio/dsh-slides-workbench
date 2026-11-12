@@ -14,7 +14,6 @@ import css from './styles.css'
 import { Button, LangSwitch, Spinner, ToastHost } from './ui.jsx'
 import { dismissToast } from './api.js'
 
-/** 三个入口：key 同时是侧栏行 id 和 main 面板 key，route 是 open-slide 的路径。 */
 /** 唯一入口：侧栏行 id 同时是 main 面板 key。 */
 const PANEL_ID = 'slides-workbench'
 
@@ -57,14 +56,20 @@ function Panel() {
   useLang()
   const snap = useSnapshot()
   const state = snap.state
+  // 首页（工作台画布）↔ open-slide 页面；deckId 非空时直接打开那个 deck
+  const [view, setView] = React.useState({ mode: 'home', deckId: null })
 
   React.useEffect(() => watchState(), [])
+
+  const openDeck = (deckId) => setView({ mode: 'app', deckId })
+  const goHome = () => setView({ mode: 'home', deckId: null })
 
   let body
   if (!state) body = snap.loading ? <BootState /> : <FailState error={snap.error} />
   else if (!state.workspace?.scaffolded || !state.workspace?.installed) body = <SetupView />
   else if (state.server?.status !== 'running') body = <ServerView />
-  else body = <AppFrame state={state} />
+  else if (view.mode === 'app') body = <AppFrame state={state} route={view.deckId ? `s/${view.deckId}` : ''} onHome={goHome} />
+  else body = <HomeView state={state} onOpen={openDeck} onBrowse={() => setView({ mode: 'app', deckId: null })} />
 
   return (
     <div className="sw-root">
