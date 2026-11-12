@@ -250,6 +250,11 @@ body[data-ds-dark-theme] .sw-root { color-scheme: dark; }
   flex: 1; min-width: 0; border: 0; outline: 0; background: none;
   color: var(--ink); font-size: 15px; line-height: 20px;
 }
+.sw-hero-input input:focus,
+.sw-hero-input input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
 .sw-hero-input input::placeholder { color: var(--ink3); }
 .sw-hero-send {
   flex: none; display: inline-flex; align-items: center; justify-content: center;
@@ -273,6 +278,7 @@ body[data-ds-dark-theme] .sw-root { color-scheme: dark; }
 
 /* 散落的卡片 */
 .sw-node { position: absolute; z-index: 1; transform: translate(-50%, -50%); }
+.sw-pop { will-change: transform; }
 .sw-node:hover, .sw-node:focus-within { z-index: 6; }
 .sw-node .sw-card {
   transform: rotate(var(--r, 0deg));

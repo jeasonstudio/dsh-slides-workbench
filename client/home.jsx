@@ -78,7 +78,8 @@ function Node({ deck, pos, index, state, onOpen, onShown }) {
   React.useLayoutEffect(() => {
     if (entered.current) return
     entered.current = true
-    const el = ref.current
+    // 只动画内层 .sw-pop：外层的 translate(-50%,-50%) 不能被动画覆盖，否则结束时会错位
+    const el = ref.current?.firstElementChild
     if (!el || reducedMotion()) return
     const k = 0.25
     el.animate(
