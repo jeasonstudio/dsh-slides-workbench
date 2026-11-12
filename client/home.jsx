@@ -1,32 +1,24 @@
 // 工作台首页：中间一个输入框，周围一圈 slide 卡片（固定轨道，不做无限拖动）。
 // 视觉参考媒体工作台的「灵感墙」：环境渐变 + 卡片微交互，但布局是稳定的。
 import React from 'react'
-import { createDeck, startAgent } from './api.js'
+import { createDeck, startAgent, thumbUrl } from './api.js'
 import { t } from './i18n.js'
 import { Icon, Spinner } from './ui.jsx'
 
 /**
- * 固定轨道：左右两列、竖向均分，越靠中间越靠里一点，形成一圈但不占满。
- * @param {number} count - 要摆几张。
- * @returns {Array<{x: number, y: number, r: number, s: number}>} 每张的中心点（%）和微旋转/缩放。
+ * 卡片墙：左右两组松散错落，大小三种，各带一点随机感的旋转。
+ * 中间留给输入框，不做无限拖拽，位置是固定的。
  */
-function orbitFor(count) {
-  const rows = Math.max(1, Math.ceil(count / 2))
-  const spots = []
-  for (let index = 0; index < count; index += 1) {
-    const side = index % 2 === 0 ? -1 : 1
-    const row = Math.floor(index / 2)
-    const y = rows === 1 ? 50 : 8 + (row * 84) / (rows - 1)
-    const inward = row % 2 === 0 ? 0 : 3.5
-    spots.push({
-      x: side < 0 ? 13 + inward : 87 - inward,
-      y,
-      r: ((index % 3) - 1) * 3,
-      s: 0.82 + (index % 2) * 0.06,
-    })
-  }
-  return spots
-}
+const WALL = [
+  { x: 17, y: 13, size: 'md', r: -6 },
+  { x: 9, y: 43, size: 'sm', r: 5 },
+  { x: 19, y: 76, size: 'lg', r: -2 },
+  { x: 81, y: 16, size: 'lg', r: 4 },
+  { x: 91, y: 45, size: 'md', r: -5 },
+  { x: 78, y: 74, size: 'sm', r: 6 },
+  { x: 92, y: 88, size: 'sm', r: -3 },
+  { x: 28, y: 92, size: 'sm', r: 3 },
+]
 
 /** 根据 deck id 选一个预设封面基调（纯 CSS，不加载任何图片）。 */
 function toneOf(id) {
@@ -113,41 +105,58 @@ export function HomeView({ state, onOpen, onBrowse }) {
   }
 
   const visible = decks.filter(isMeaningful)
-  const tiles = visible.slice(0, 10)
-  const spots = orbitFor(tiles.length)
+  const tiles = visible.slice(0, WALL.length)
+  // 截图要等 Host 用 headless Chrome 慢慢截，没截好就先显示预设封面，过几秒再换
+  const [shotNonce, setShotNonce] = React.useState(0)
+  const [missing, setMissing] = React.useState({})
+  React.useEffect(() => {
+    const pendingCount = Object.values(missing).filter(Boolean).length
+    if (!pendingCount || shotNonce >= 4) return undefined
+    const timer = setTimeout(() => {
+      setMissing({})
+      setShotNonce((n) => n + 1)
+    }, 6000)
+    return () => clearTimeout(timer)
+  }, [missing, shotNonce])
 
   return (
     <div className="sw-home" ref={stageRef}>
       <div className="sw-home-stage">
         {tiles.map((deck, index) => {
-          const spot = spots[index]
+          const spot = WALL[index]
           return (
             <button
               key={deck.id}
               type="button"
-              className="sw-tile"
+              className={`sw-tile is-${spot.size}`}
               style={{
                 '--x': `${spot.x}%`,
                 '--y': `${spot.y}%`,
                 '--r': `${spot.r}deg`,
-                '--s': String(spot.s),
-                '--d': `${90 + index * 45}ms`,
+                '--d': `${80 + index * 55}ms`,
               }}
               onClick={() => onOpen(deck.id)}
               title={deck.title || deck.id}
             >
-              <span className={`sw-tile-art is-${toneOf(deck.id)}`} aria-hidden="true">
-                <span className="sw-tile-art-eyebrow">DeepSeek Harness</span>
-                <span className="sw-tile-art-title">{deck.title || deck.id}</span>
-                <span className="sw-tile-art-foot">
-                  <span className="sw-tile-art-rule" />
-                  <span className="sw-tile-art-page">{String(deck.pages || 1).padStart(2, '0')}</span>
+              <span className="sw-tile-frame">
+                <span className={`sw-tile-art is-${toneOf(deck.id)}`} aria-hidden="true">
+                  <span className="sw-tile-art-eyebrow">DeepSeek Harness</span>
+                  <span className="sw-tile-art-title">{deck.title || deck.id}</span>
+                  <span className="sw-tile-art-foot">
+                    <span className="sw-tile-art-rule" />
+                    <span className="sw-tile-art-page">{String(deck.pages || 1).padStart(2, '0')}</span>
+                  </span>
                 </span>
+                <img
+                  className="sw-tile-shot"
+                  src={`${thumbUrl(deck.id, deck.updatedAt)}&n=${shotNonce}`}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  onError={() => setMissing((prev) => (prev[deck.id] ? prev : { ...prev, [deck.id]: true }))}
+                />
               </span>
-              <span className="sw-tile-meta">
-                <span className="sw-tile-title">{deck.title || deck.id}</span>
-                <span className="sw-tile-pages">{t('home.pages', { n: deck.pages || 1 })}</span>
-              </span>
+              <span className="sw-tile-title">{deck.title || deck.id}</span>
             </button>
           )
         })}

@@ -7,6 +7,7 @@ import { packageRoot, resolveWorkspaceRoot } from './env.js'
 import { APP_PREFIX, createHttpProxy, createUpgradeProxy, DEFAULT_ROOT_ROUTES, discoverRootRoutes } from './proxy.js'
 import { DevServer } from './preview.js'
 import { registerPrompt, registerSkills } from './skills.js'
+import { Thumbs } from './thumbs.js'
 import { registerTools } from './tools.js'
 import { Workspace } from './workspace.js'
 
@@ -71,6 +72,8 @@ export default {
     const proxyUpgrade = createUpgradeProxy(dev)
     // open-slide 编辑器的 Agent 面板：只接 DSH（不转发给它自己的 claude/codex provider）
     const bridge = new AgentBridge({ ctx, root: workspace.root })
+    // deck 缩略图：headless Chrome 截一张缓存起来，首页直接用 <img>
+    const thumbs = new Thumbs({ workspace, dev, decks })
     // token 级流式：把 DSH 的 assistant-stream 直接推给面板
     ctx.effect(() => bridge.attach(), 'dsh-slides-workbench: agent stream')
 
@@ -156,6 +159,11 @@ export default {
       const url = new URL(req.url || '/', 'http://local')
       const rest = url.pathname.slice(PREFIX.length).replace(/^\/+/, '').replace(/\/+$/, '')
       const method = req.method || 'GET'
+
+      if (rest === 'thumb' && (method === 'GET' || method === 'HEAD')) {
+        await thumbs.handle(req, res)
+        return
+      }
 
       // open-slide 自己的页面（含它的静态资源和 HMR）：原样转发给 dev server
       if (rest === 'app' || rest.startsWith('app/')) {

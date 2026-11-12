@@ -213,6 +213,10 @@ export function appUrl(state = snapshot.state, route = '') {
  * @param {number} [page] - 第几页，从 1 开始。
  * @returns {string} iframe 地址。
  */
+export function thumbUrl(id, version = '') {
+  return `${BASE}thumb?id=${encodeURIComponent(id)}&v=${encodeURIComponent(String(version))}`
+}
+
 export function deckThumbUrl(state = snapshot.state, id, page = 1) {
   const at = Number(state?.server?.startedAt) || 0
   return `${APP_PREFIX}/s/${encodeURIComponent(id)}/preview?p=${Math.max(1, page)}&v=${at}`
