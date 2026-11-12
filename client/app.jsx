@@ -3,7 +3,7 @@
 import React from 'react'
 import { appLocaleId, applyLocale, applyTheme, hostIsDark, watchHostTheme } from './appearance.js'
 import { appUrl, externalUrl } from './api.js'
-import { injectEmbedStyle, watchBrandLogo } from './embed.js'
+import { injectEmbedStyle, watchBrandLogo, watchDragRegion } from './embed.js'
 import { lang, subscribeLang, t } from './i18n.js'
 import { IconButton, Spinner } from './ui.jsx'
 
@@ -21,11 +21,17 @@ export function AppFrame({ state, title }) {
     localeSynced.current = false
   }, [url])
 
-  // open-slide 的 provider 图标写死了 claude / codex：换成我们的图标，并在重渲染后补上
+  // open-slide 的 provider 图标写死了 claude / codex：换成我们的图标，并在重渲染后补上；
+  // 顺便把页面顶部那一行标记成窗口拖拽区（只在桌面客户端里生效）
   React.useEffect(() => {
     const doc = frameRef.current?.contentDocument
     if (!doc) return undefined
-    return watchBrandLogo(doc)
+    const stopBrand = watchBrandLogo(doc)
+    const stopDrag = watchDragRegion(doc)
+    return () => {
+      stopBrand()
+      stopDrag()
+    }
   }, [nonce, loaded])
 
   // DSH 切明暗：直接改 iframe 里的 class，不重载页面

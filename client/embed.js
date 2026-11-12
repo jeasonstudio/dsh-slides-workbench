@@ -26,6 +26,21 @@ div.h-dvh > div.hidden.md\\:block:has(> aside.group\\/side) { display: none !imp
 div.h-dvh:not(.flex-col) { background-color: var(--background) !important; }
 div.h-dvh:not(.flex-col) > div[class*="md:py-2"][class*="md:pr-2"] { padding: 0 !important; }
 
+/* 桌面客户端（Electron）里让页面顶部那一行当窗口拖拽区：
+   同源 iframe 里的 -webkit-app-region 会被内核收集，但宿主 base.css 的 no-drag
+   规则管不到 iframe 内部，所以这里自己把可交互元素排除掉。 */
+html[data-sw-desktop] [data-sw-drag] { -webkit-app-region: drag; }
+/* 顶部那一行上面还有一段空白内边距，一起做成拖拽区（宽度撑满、高度跟着算） */
+html[data-sw-desktop] #sw-drag-band {
+  position: fixed; left: 0; right: 0; top: 0;
+  -webkit-app-region: drag; background: transparent; z-index: 0;
+}
+html[data-sw-desktop] [data-sw-drag] :is(
+  button, a, input, select, textarea, summary, [contenteditable='true'], [tabindex],
+  [role='button'], [role='link'], [role='tab'], [role='checkbox'], [role='radio'],
+  [role='combobox'], [role='textbox'], [role='menuitem'], [role='switch'], [role='slider']
+) { -webkit-app-region: no-drag; }
+
 /* 首页内容那张卡片本身（md:rounded-[10px] + ring + shadow-edge）也摊平；
    这个类只有 deck 列表页在用（编辑器里没有），按类名+背景一起限定即可。 */
 div[class*="md:rounded-[10px]"][class*="bg-background"] {
@@ -79,6 +94,73 @@ export function watchBrandLogo(doc) {
     queueMicrotask(() => {
       scheduled = false
       replaceBrandLogo(doc)
+    })
+  })
+  observer.observe(body, { childList: true, subtree: true })
+  return () => observer.disconnect()
+}
+
+/** 当前是不是 DSH 桌面客户端（Electron 渲染进程）。 */
+export function isDesktopClient() {
+  return typeof navigator !== 'undefined' && /\bElectron\//.test(navigator.userAgent)
+}
+
+/**
+ * 让 open-slide 页面最顶部那一行当窗口拖拽区（只在桌面客户端里做）。
+ * open-slide 自己不知道宿主，所以由我们找到最靠上的 header，打上标记，
+ * 再用上面注入的 html[data-sw-desktop] [data-sw-drag] 规则变成 app-region: drag。
+ * @param {Document|null} doc - iframe 文档。
+ * @returns {number} 标记了几个。
+ */
+export function markDragRegion(doc) {
+  const html = doc?.documentElement
+  if (!html || !isDesktopClient()) return 0
+  html.setAttribute('data-sw-desktop', '')
+  const headers = [...(doc.querySelectorAll('header') ?? [])]
+  let marked = 0
+  let topmost = Infinity
+  for (const el of headers) {
+    const rect = el.getBoundingClientRect()
+    // 只认真正在最上面的那条：宽度占大半屏、高度是一行
+    if (rect.width < window.innerWidth * 0.5 || rect.height < 20 || rect.height > 120) continue
+    if (rect.top > 160) continue
+    el.setAttribute('data-sw-drag', '')
+    topmost = Math.min(topmost, rect.top)
+    marked += 1
+  }
+  // 行上方那段空白（页面上边距）也做成拖拽区，不然只有 32px 可抓
+  let band = doc.getElementById('sw-drag-band')
+  if (topmost > 8) {
+    if (!band) {
+      band = doc.createElement('div')
+      band.id = 'sw-drag-band'
+      band.setAttribute('data-sw-drag', '')
+      band.setAttribute('aria-hidden', 'true')
+      doc.body?.insertBefore(band, doc.body.firstChild)
+    }
+    band.style.height = `${Math.floor(topmost)}px`
+  } else if (band) {
+    band.remove()
+  }
+  return marked
+}
+
+/**
+ * 盯着 iframe：换页 / 重新渲染后补上拖拽标记。
+ * @param {Document|null} doc - iframe 文档。
+ * @returns {() => void} 停止监听。
+ */
+export function watchDragRegion(doc) {
+  markDragRegion(doc)
+  const body = doc?.body
+  if (!body || typeof MutationObserver !== 'function') return () => {}
+  let scheduled = false
+  const observer = new MutationObserver(() => {
+    if (scheduled) return
+    scheduled = true
+    queueMicrotask(() => {
+      scheduled = false
+      markDragRegion(doc)
     })
   })
   observer.observe(body, { childList: true, subtree: true })
