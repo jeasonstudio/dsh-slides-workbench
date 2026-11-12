@@ -1,53 +1,18 @@
-// 工作台首页：中间一个输入框，周围一圈 slide 卡片（固定轨道，不做无限拖动）。
-// 视觉参考媒体工作台的「灵感墙」：环境渐变 + 卡片微交互，但布局是稳定的。
+// 工作台首页：1:1 照搬 dsh-media-desk 的灵感墙结构
+//   .sw-stage（点阵底）> .sw-world（中心原点、可缩放）> .sw-hero-anchor（中间那句话）+ .sw-node（卡片）
+// 卡片进入用 WAAPI 从中心往外弹（按顺时针先后），hover 时摆正、抬起、放大。
 import React from 'react'
 import { createDeck, startAgent, thumbUrl } from './api.js'
+import { SPRING_SOFT, cardSize, hash, reducedMotion, scatterLayout } from './home-layout.js'
 import { formatWhen, t } from './i18n.js'
 import { Icon, Spinner } from './ui.jsx'
 
-/**
- * 卡片墙：四边都允许切出画面（只露一部分），尺寸跨度从 110px 到 360px，
- * 上下也用大卡片压住，避免中间输入框上下太空。位置固定，不跟随鼠标。
- */
-const WALL = [
-  // 上沿（左右各一张切出去）
-  { x: 1, y: 9, size: 'xl', r: -8 },
-  { x: 27, y: 13, size: 'sm', r: 5 },
-  { x: 70, y: 11, size: 'md', r: -5 },
-  { x: 99, y: 8, size: 'lg', r: 4 },
-  // 中段（贴着输入框两侧，留出呼吸）
-  { x: 7, y: 40, size: 'md', r: 6 },
-  { x: 93, y: 39, size: 'md', r: -7 },
-  { x: 98, y: 65, size: 'xl', r: 3 },
-  // 下沿
-  { x: 17, y: 88, size: 'sm', r: -4 },
-  { x: 41, y: 93, size: 'md', r: 5 },
-  { x: 62, y: 90, size: 'sm', r: -3 },
-  { x: 81, y: 94, size: 'lg', r: 4 },
-  { x: 2, y: 70, size: 'sm', r: -6 },
+/** 三个起点：点一下把对应的话填进输入框。 */
+const TEMPLATES = [
+  { id: 'launch', label: 'home.tpl.launch', prompt: 'home.tpl.launchPrompt' },
+  { id: 'review', label: 'home.tpl.review', prompt: 'home.tpl.reviewPrompt' },
+  { id: 'talk', label: 'home.tpl.talk', prompt: 'home.tpl.talkPrompt' },
 ]
-
-/**
- * 顺时针次序：从正上方开始，按角度排。
- * @param {{x: number, y: number}} spot - 卡片中心（%）。
- * @returns {number} 相对正上方的顺时针角度（0–360）。
- */
-function clockAngle(spot) {
-  const deg = (Math.atan2(spot.x - 50, -(spot.y - 50)) * 180) / Math.PI
-  return (deg + 360) % 360
-}
-
-/** 每个位置在第几个出现（顺时针小时间差）。 */
-const CLOCK_ORDER = WALL.map((spot, index) => ({ index, angle: clockAngle(spot) }))
-  .sort((a, b) => a.angle - b.angle)
-  .reduce((map, item, rank) => map.set(item.index, rank), new Map())
-
-/** 根据 deck id 选一个预设封面基调（纯 CSS，不加载任何图片）。 */
-function toneOf(id) {
-  let hash = 0
-  for (let i = 0; i < id.length; i += 1) hash = (hash * 31 + id.charCodeAt(i)) | 0
-  return ['ink', 'violet', 'mint', 'amber'][Math.abs(hash) % 4]
-}
 
 /** 空 deck（没写内容的一页 Untitled）不上墙。 */
 function isMeaningful(deck) {
@@ -58,25 +23,109 @@ function isMeaningful(deck) {
   return true
 }
 
-/** 三个起点：点一下把对应的话填进输入框。 */
-const TEMPLATES = [
-  { id: 'launch', label: 'home.tpl.launch', prompt: 'home.tpl.launchPrompt' },
-  { id: 'review', label: 'home.tpl.review', prompt: 'home.tpl.reviewPrompt' },
-  { id: 'talk', label: 'home.tpl.talk', prompt: 'home.tpl.talkPrompt' },
-]
-
-/** 把标题压成一句能当 deck 名的话。 */
 function deckTitle(text) {
   const first = text.split(/[。！？\n.!?]/)[0] ?? text
   return first.trim().slice(0, 40) || t('home.untitled')
 }
 
+/** 卡片：结构完全照 media-desk 的 .md-card（内嵌图 + 标题 + 底栏）。 */
+function DeckCard({ deck, state, angle, onOpen, onShown }) {
+  const shot = thumbUrl(deck.id, deck.updatedAt)
+  return (
+    <article
+      className="sw-card"
+      role="button"
+      tabIndex={0}
+      aria-label={deck.title || deck.id}
+      onClick={() => onOpen(deck.id)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onOpen(deck.id)
+        }
+      }}
+    >
+      <div className="sw-card-media">
+        <img
+          className="sw-card-shot"
+          src={shot}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          draggable={false}
+          onLoad={onShown}
+          onError={onShown}
+        />
+      </div>
+      <div className="sw-card-caption">
+        <h3>{deck.title || deck.id}</h3>
+      </div>
+      <footer className="sw-card-foot">
+        <span className={`sw-dot is-${(hash(deck.id) % 4)}`} aria-hidden="true" />
+        <span className="sw-card-source">{t('home.pages', { n: deck.pages || 1 })}</span>
+        <span className="sw-card-time">{deck.updatedAt ? formatWhen(deck.updatedAt) : ''}</span>
+      </footer>
+      {angle ? null : null}
+    </article>
+  )
+}
+
+/** 一张卡在画布上的位置壳，负责进入动画。 */
+function Node({ deck, pos, index, state, onOpen, onShown }) {
+  const ref = React.useRef(null)
+  const entered = React.useRef(false)
+
+  React.useLayoutEffect(() => {
+    if (entered.current) return
+    entered.current = true
+    const el = ref.current
+    if (!el || reducedMotion()) return
+    const k = 0.25
+    el.animate(
+      [
+        {
+          transform: `translate(${-pos.x * k}px, ${-pos.y * k}px) scale(.8) rotate(${(hash(deck.id) % 20) - 10}deg)`,
+          opacity: 0,
+        },
+        { transform: 'none', opacity: 1 },
+      ],
+      {
+        duration: SPRING_SOFT.duration + 200,
+        easing: SPRING_SOFT.easing,
+        delay: Math.min(index * 45, 760),
+        fill: 'backwards',
+      },
+    )
+  }, [deck.id, index, pos.x, pos.y])
+
+  const size = cardSize(deck)
+  return (
+    <div
+      ref={ref}
+      className="sw-node"
+      style={{
+        left: `${pos.x}px`,
+        top: `${pos.y}px`,
+        width: `${size.w}px`,
+        '--r': `${pos.r}deg`,
+      }}
+    >
+      <div className="sw-pop">
+        <DeckCard deck={deck} state={state} onOpen={onOpen} onShown={onShown} />
+      </div>
+    </div>
+  )
+}
+
 export function HomeView({ state, onOpen, onBrowse }) {
-  const decks = state?.decks ?? []
+  const decks = (state?.decks ?? []).filter(isMeaningful)
   const [text, setText] = React.useState('')
   const [busy, setBusy] = React.useState(false)
   const [error, setError] = React.useState(null)
   const inputRef = React.useRef(null)
+  const [, setShotTick] = React.useState(0)
+
+  const posOf = React.useMemo(() => scatterLayout(decks), [decks])
 
   const submit = async (event) => {
     event?.preventDefault?.()
@@ -87,7 +136,6 @@ export function HomeView({ state, onOpen, onBrowse }) {
     try {
       const deck = await createDeck(deckTitle(prompt))
       if (!deck?.id) throw new Error(t('home.failed', { error: 'no deck' }))
-      // 先打开页面，再让 AI 在后面开始写（失败也不挡住人）
       void startAgent(deck.id, prompt)
       setText('')
       onOpen(deck.id)
@@ -110,165 +158,61 @@ export function HomeView({ state, onOpen, onBrowse }) {
     inputRef.current?.focus()
   }
 
-  const visible = decks.filter(isMeaningful)
-  const [stage, setStage] = React.useState({ w: 0, h: 0 })
-  const [luma, setLuma] = React.useState({})
-  const stageRef = React.useRef(null)
-
-  // 量一下舞台，用来把「卡片最终位置」换算成相对中心的位移
-  React.useLayoutEffect(() => {
-    const node = stageRef.current
-    if (!node) return undefined
-    const measure = () => {
-      const rect = node.getBoundingClientRect()
-      setStage({ w: rect.width, h: rect.height })
-    }
-    measure()
-    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null
-    observer?.observe(node)
-    return () => observer?.disconnect()
-  }, [])
-
-  /** 缩到 1px 取平均亮度，用来把明/暗卡片交替摆开，别整面墙都是黑的。 */
-  const onShotLoad = (event, id) => {
-    const img = event.currentTarget
-    try {
-      const canvas = document.createElement('canvas')
-      canvas.width = 1
-      canvas.height = 1
-      const ctx = canvas.getContext('2d')
-      ctx.drawImage(img, 0, 0, 1, 1)
-      const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data
-      const value = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
-      setLuma((prev) => (prev[id] === undefined ? { ...prev, [id]: value } : prev))
-    } catch {
-      // canvas 被安全策略拦了就算了，按原顺序摆
-    }
-  }
-
-  const arranged = React.useMemo(() => {
-    const list = visible.slice(0, WALL.length)
-    const known = list.filter((deck) => luma[deck.id] !== undefined)
-    if (known.length < list.length) return list
-    const sorted = [...list].sort((a, b) => luma[b.id] - luma[a.id])
-    const out = []
-    let light = 0
-    let dark = sorted.length - 1
-    let takeLight = true
-    while (out.length < sorted.length) {
-      const pick = takeLight ? sorted[light++] : sorted[dark--]
-      if (pick) out.push(pick)
-      takeLight = !takeLight
-      if (light > dark) break
-    }
-    return out
-  }, [visible, luma])
-
-  const tiles = arranged
-  // 截图要等 Host 用 headless Chrome 慢慢截，没截好就先显示预设封面，过几秒再换
-  const [shotNonce, setShotNonce] = React.useState(0)
-  const [missing, setMissing] = React.useState({})
-  React.useEffect(() => {
-    const pendingCount = Object.values(missing).filter(Boolean).length
-    if (!pendingCount || shotNonce >= 4) return undefined
-    const timer = setTimeout(() => {
-      setMissing({})
-      setShotNonce((n) => n + 1)
-    }, 6000)
-    return () => clearTimeout(timer)
-  }, [missing, shotNonce])
-
   return (
-    <div className="sw-home">
-      <div className="sw-home-stage" ref={stageRef}>
-        {tiles.map((deck, index) => {
-          const spot = WALL[index]
-          const rank = CLOCK_ORDER.get(index) ?? index
-          const dx = ((spot.x - 50) / 100) * stage.w
-          const dy = ((spot.y - 50) / 100) * stage.h
-          return (
-            <button
-              key={deck.id}
-              type="button"
-              className={`sw-tile is-${spot.size}`}
-              style={{
-                '--x': `${spot.x}%`,
-                '--y': `${spot.y}%`,
-                '--r': `${spot.r}deg`,
-                '--dx': `${dx}`.replace(/px$/, '') + 'px',
-                '--dy': `${dy}`.replace(/px$/, '') + 'px',
-                '--delay': `${rank * 60}ms`,
-              }}
-              onClick={() => onOpen(deck.id)}
-              title={deck.title || deck.id}
-            >
-              <span className="sw-tile-card">
-                <span className="sw-tile-media">
-                  <span className={`sw-tile-art is-${toneOf(deck.id)}`} aria-hidden="true">
-                    <span className="sw-tile-art-eyebrow">DeepSeek Harness</span>
-                    <span className="sw-tile-art-title">{deck.title || deck.id}</span>
-                  </span>
-                  <img
-                    className="sw-tile-shot"
-                    onLoad={(event) => onShotLoad(event, deck.id)}
-                    src={`${thumbUrl(deck.id, deck.updatedAt)}&n=${shotNonce}`}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    draggable={false}
-                    onError={() => setMissing((prev) => (prev[deck.id] ? prev : { ...prev, [deck.id]: true }))}
-                  />
-                </span>
-                <span className="sw-tile-caption">
-                  <span className="sw-tile-title">{deck.title || deck.id}</span>
-                </span>
-                <span className="sw-tile-foot">
-                  <span className={`sw-tile-dot is-${toneOf(deck.id)}`} aria-hidden="true" />
-                  <span className="sw-tile-source">{t('home.pages', { n: deck.pages || 1 })}</span>
-                  <span className="sw-tile-time">{deck.updatedAt ? formatWhen(deck.updatedAt) : ''}</span>
-                </span>
-              </span>
-            </button>
-          )
-        })}
-
-        <form className="sw-composer" onSubmit={submit}>
-          <p className="sw-home-eyebrow">{t('home.eyebrow')}</p>
-          <h1 className="sw-home-title">{t('home.title')}</h1>
-          <div className={`sw-composer-box ${busy ? 'is-busy' : ''}`}>
-            <textarea
-              ref={inputRef}
-              rows={2}
-              value={text}
-              onChange={(event) => setText(event.target.value)}
-              onKeyDown={onKeyDown}
-              placeholder={t('home.placeholder')}
-              aria-label={t('home.placeholder')}
-            />
-            <div className="sw-composer-foot">
-              <span className="sw-hint">{t('home.hint')}</span>
-              <button type="submit" className="sw-send" disabled={busy || !text.trim()} aria-label={t('home.submit')} title={t('home.submit')}>
+    <div className="sw-stage">
+      <div className="sw-world">
+        <div className="sw-hero-anchor">
+          <section className="sw-hero">
+            <p className="sw-hero-date">{t('home.eyebrow')}</p>
+            <h1 className="sw-hero-line">
+              {t('home.line1')}
+              <br />
+              <b>{t('home.line2')}</b>
+            </h1>
+            <form className="sw-hero-input" onSubmit={submit}>
+              <Icon name="slides" size={16} />
+              <input
+                ref={inputRef}
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+                onKeyDown={onKeyDown}
+                placeholder={t('home.placeholder')}
+                aria-label={t('home.placeholder')}
+              />
+              <button type="submit" className="sw-hero-send" disabled={busy || !text.trim()} aria-label={t('home.submit')}>
                 {busy ? <Spinner size={14} /> : <Icon name="arrowUp" size={16} />}
               </button>
-            </div>
-          </div>
-          {error ? <p className="sw-home-error" role="alert">{error}</p> : null}
-          <div className="sw-chips">
-            {TEMPLATES.map((template) => (
-              <button key={template.id} type="button" className="sw-chip" onClick={() => fill(t(template.prompt))}>
-                {t(template.label)}
+            </form>
+            {error ? <p className="sw-hero-error" role="alert">{error}</p> : null}
+            <p className="sw-hero-meta">
+              {decks.length ? t('home.recent', { n: decks.length }) : t('home.empty')}
+              {' · '}
+              <button type="button" className="sw-inline-link" onClick={onBrowse}>
+                {t('home.browse')}
               </button>
-            ))}
-          </div>
-        </form>
-      </div>
+            </p>
+            <div className="sw-chips">
+              {TEMPLATES.map((template) => (
+                <button key={template.id} type="button" className="sw-chip" onClick={() => fill(t(template.prompt))}>
+                  {t(template.label)}
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
 
-      <footer className="sw-home-foot">
-        <span className="sw-hint">{visible.length ? t('home.recent', { n: visible.length }) : t('home.empty')}</span>
-        <button type="button" className="sw-home-browse" onClick={onBrowse}>
-          {t('home.browse')}<Icon name="arrowRight" size={14} />
-        </button>
-      </footer>
+        {decks.map((deck, index) => (
+          <Node
+            key={deck.id}
+            deck={deck}
+            pos={posOf[deck.id] ?? { x: 0, y: 0, r: 0 }}
+            index={index}
+            state={state}
+            onOpen={onOpen}
+            onShown={() => setShotTick((n) => n + 1)}
+          />
+        ))}
+      </div>
     </div>
   )
 }

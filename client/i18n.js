@@ -5,6 +5,8 @@ import React from 'react'
 const ZH = {
   'app.name': '演示文稿工作台',
   'home.eyebrow': '演示文稿工作台',
+  'home.line1': '想做一份',
+  'home.line2': '能讲的演示？',
   'home.title': '想做一份什么演示？',
   'home.placeholder': '一句话说清主题、受众和风格，剩下的交给 AI……',
   'home.hint': 'Enter 开始 · Shift+Enter 换行',
@@ -157,6 +159,8 @@ const ZH = {
 const EN = {
   'app.name': 'Slides Workbench',
   'home.eyebrow': 'Slides workbench',
+  'home.line1': 'What are you',
+  'home.line2': 'presenting today?',
   'home.title': 'What are you presenting?',
   'home.placeholder': 'One sentence about the topic, audience and tone — the agent writes the pages.',
   'home.hint': 'Enter to start · Shift+Enter for a new line',
