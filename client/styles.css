@@ -233,7 +233,7 @@ body[data-ds-dark-theme] .sw-root { color-scheme: dark; }
   background-size: 16px 16px;
   background-position: 0 0;
 }
-.sw-home-stage { position: relative; flex: 1; min-height: 0; }
+.sw-home-stage { position: relative; flex: 1; min-height: 0; overflow: hidden; }
 
 /* 卡片：参考媒体工作台的灵感卡——卡片本身带圆角+柔和阴影，图片内嵌，
    hover 时反向摆正、抬起、放大，用回弹缓动；出现时错峰上浮。 */
@@ -242,7 +242,7 @@ body[data-ds-dark-theme] .sw-root { color-scheme: dark; }
   left: var(--x);
   top: var(--y);
   width: var(--w);
-  transform: translate(-50%, -50%) translate(calc(var(--px) * var(--d, .7) * 18px), calc(var(--py) * var(--d, .7) * 18px));
+  transform: translate(-50%, -50%);
   transition: left .6s cubic-bezier(.2, .8, .2, 1), top .6s cubic-bezier(.2, .8, .2, 1);
   display: block;
   padding: 0;
@@ -253,9 +253,10 @@ body[data-ds-dark-theme] .sw-root { color-scheme: dark; }
   animation-delay: var(--delay, 0ms);
 }
 .sw-tile:hover, .sw-tile:focus-visible { z-index: 6; }
-.sw-tile.is-lg { --w: clamp(200px, 18.5vw, 268px); }
-.sw-tile.is-md { --w: clamp(168px, 15.5vw, 220px); }
-.sw-tile.is-sm { --w: clamp(136px, 13vw, 180px); }
+.sw-tile.is-xl { --w: clamp(240px, 24vw, 360px); }
+.sw-tile.is-lg { --w: clamp(190px, 19vw, 280px); }
+.sw-tile.is-md { --w: clamp(150px, 15vw, 215px); }
+.sw-tile.is-sm { --w: clamp(112px, 11.5vw, 156px); }
 
 .sw-tile-card {
   display: block;

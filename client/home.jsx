@@ -6,18 +6,27 @@ import { formatWhen, t } from './i18n.js'
 import { Icon, Spinner } from './ui.jsx'
 
 /**
- * 卡片墙：左右两组松散错落，大小三种，各带一点随机感的旋转。
- * 中间留给输入框，不做无限拖拽，位置是固定的。
+ * 卡片墙：四边都允许切出画面（只露一部分），尺寸跨度从 110px 到 360px，
+ * 上下也用大卡片压住，避免中间输入框上下太空。位置固定，不跟随鼠标。
  */
 const WALL = [
-  { x: 17, y: 13, size: 'md', r: -6 },
-  { x: 9, y: 43, size: 'sm', r: 5 },
-  { x: 18, y: 74, size: 'lg', r: -2 },
-  { x: 81, y: 16, size: 'lg', r: 4 },
-  { x: 91, y: 45, size: 'md', r: -5 },
-  { x: 78, y: 74, size: 'sm', r: 6 },
-  { x: 92, y: 88, size: 'sm', r: -3 },
-  { x: 41, y: 89, size: 'sm', r: 3 },
+  // 上沿：两张 xl 切边，中间几张完整
+  { x: 2, y: 9, size: 'xl', r: -8 },
+  { x: 20, y: 12, size: 'sm', r: 5 },
+  { x: 36, y: 8, size: 'md', r: -4 },
+  { x: 66, y: 9, size: 'md', r: 6 },
+  { x: 88, y: 12, size: 'sm', r: -5 },
+  { x: 99, y: 8, size: 'xl', r: 4 },
+  // 中段：贴着输入框两侧，把上下填实
+  { x: 9, y: 34, size: 'md', r: 4 },
+  { x: 91, y: 33, size: 'md', r: -6 },
+  { x: 5, y: 63, size: 'lg', r: 7 },
+  { x: 95, y: 65, size: 'lg', r: -3 },
+  // 下沿：切出画面底部
+  { x: 23, y: 88, size: 'sm', r: -3 },
+  { x: 43, y: 93, size: 'md', r: 4 },
+  { x: 63, y: 88, size: 'md', r: -5 },
+  { x: 82, y: 93, size: 'lg', r: 3 },
 ]
 
 /** 根据 deck id 选一个预设封面基调（纯 CSS，不加载任何图片）。 */
@@ -54,23 +63,7 @@ export function HomeView({ state, onOpen, onBrowse }) {
   const [text, setText] = React.useState('')
   const [busy, setBusy] = React.useState(false)
   const [error, setError] = React.useState(null)
-  const stageRef = React.useRef(null)
   const inputRef = React.useRef(null)
-
-  // 鼠标轻微视差：只改 CSS 变量，不做拖拽
-  React.useEffect(() => {
-    const stage = stageRef.current
-    if (!stage || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return undefined
-    const onMove = (event) => {
-      const rect = stage.getBoundingClientRect()
-      const dx = (event.clientX - rect.left) / rect.width - 0.5
-      const dy = (event.clientY - rect.top) / rect.height - 0.5
-      stage.style.setProperty('--px', dx.toFixed(3))
-      stage.style.setProperty('--py', dy.toFixed(3))
-    }
-    stage.addEventListener('pointermove', onMove)
-    return () => stage.removeEventListener('pointermove', onMove)
-  }, [])
 
   const submit = async (event) => {
     event?.preventDefault?.()
@@ -120,7 +113,7 @@ export function HomeView({ state, onOpen, onBrowse }) {
   }, [missing, shotNonce])
 
   return (
-    <div className="sw-home" ref={stageRef}>
+    <div className="sw-home">
       <div className="sw-home-stage">
         {tiles.map((deck, index) => {
           const spot = WALL[index]
@@ -133,7 +126,6 @@ export function HomeView({ state, onOpen, onBrowse }) {
                 '--x': `${spot.x}%`,
                 '--y': `${spot.y}%`,
                 '--r': `${spot.r}deg`,
-                '--d': String(0.45 + ((index * 7) % 11) / 18),
                 '--delay': `${70 + index * 65}ms`,
               }}
               onClick={() => onOpen(deck.id)}
