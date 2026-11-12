@@ -12,12 +12,12 @@ import { Icon, Spinner } from './ui.jsx'
 const WALL = [
   { x: 17, y: 13, size: 'md', r: -6 },
   { x: 9, y: 43, size: 'sm', r: 5 },
-  { x: 19, y: 76, size: 'lg', r: -2 },
+  { x: 18, y: 74, size: 'lg', r: -2 },
   { x: 81, y: 16, size: 'lg', r: 4 },
   { x: 91, y: 45, size: 'md', r: -5 },
   { x: 78, y: 74, size: 'sm', r: 6 },
   { x: 92, y: 88, size: 'sm', r: -3 },
-  { x: 28, y: 92, size: 'sm', r: 3 },
+  { x: 41, y: 89, size: 'sm', r: 3 },
 ]
 
 /** 根据 deck id 选一个预设封面基调（纯 CSS，不加载任何图片）。 */

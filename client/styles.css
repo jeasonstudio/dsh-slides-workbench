@@ -269,7 +269,8 @@ body[data-ds-dark-theme] .sw-root { color-scheme: dark; }
 }
 .sw-tile:hover .sw-tile-card,
 .sw-tile:focus-visible .sw-tile-card {
-  transform: rotate(0deg) translateY(-4px) scale(1.025);
+  /* hover 不摆正，反而往反方向俏皮地歪一点 */
+  transform: rotate(calc(var(--r) * -1.35)) translateY(-5px) scale(1.03);
   box-shadow: 0 22px 46px -14px rgba(0, 0, 0, .3);
 }
 @keyframes sw-card-in {
