@@ -13,4 +13,4 @@
 ## 在 DeepSeek Harness 里
 
 优先用插件的 `slides_*` 工具（`slides_status`、`slides_list`、`slides_create_deck`、
-`slides_write_deck` …），并在写页面前先读 `slides-authoring` skill。
+`slides_write_deck` …），并在写页面前先读 `slide-authoring` skill。

@@ -1,15 +1,76 @@
 // open-slide 工作区：模板初始化、依赖安装、静态构建。
 import { spawn } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 import { copyFile, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { basename, join } from 'node:path'
-import { exists, pipeLines, resolveNpm, templateDir } from './env.js'
+import { exists, nodeRuntime, pipeLines, resolveNpm, templateDir } from './env.js'
 
 const LOG_LIMIT = 240
 const INSTALL_TIMEOUT_MS = 12 * 60_000
+const VERIFY_TIMEOUT_MS = 60_000
 const BUILD_TIMEOUT_MS = 5 * 60_000
 
 const TEMPLATE_FILES = ['package.json', 'tsconfig.json', 'open-slide.config.ts', 'AGENTS.md', '.gitignore', 'README.md']
 const TEMPLATE_DIRS = ['slides', 'themes', 'assets']
+
+// 依次尝试的安装源。lockfile 锁死版本与 integrity，不做版本解析，用户 .npmrc 里的
+// 镜像 / min-release-age / before 都影响不到（scripts/lock-template.mjs 生成）。
+export const INSTALL_SOURCES = [
+  { registry: 'https://registry.npmmirror.com/', lockfile: 'package-lock.public.json' },
+  { registry: 'https://registry.npmjs.org/', lockfile: 'package-lock.public.json' },
+]
+
+// 装好并验证过之后写在 node_modules 里；内容对不上（依赖或 lockfile 变了、旧版装的）就当没装
+const INSTALL_MARKER = '.slides-workbench-install.json'
+
+// 装完实际加载一遍：原生绑定缺了（用户配了 omit=optional 之类）npm 也会报成功
+const VERIFY_SCRIPT = "await Promise.all(['rolldown', 'lightningcss', '@tailwindcss/oxide'].map(m => import(m)))"
+
+/**
+ * npm 参数：显式覆盖用户 .npmrc 里会让安装出错的配置。
+ * @param {'ci'|'install'} command - ci 严格按 lockfile；install 用于用户改过依赖的工作区。
+ * @param {string} registry - 源。
+ * @returns {string[]} 参数。
+ */
+export function npmInstallArgs(command, registry) {
+  return [
+    command,
+    `--registry=${registry}`,
+    '--replace-registry-host=always', // lockfile 里的 resolved 地址也换成当前源
+    '--include=optional', // 原生绑定都是 optionalDependencies
+    '--include=dev',
+    '--install-strategy=hoisted',
+    '--package-lock=true',
+    '--no-audit',
+    '--no-fund',
+    '--loglevel=error',
+  ]
+}
+
+/** package.json 里决定安装结果的部分。 */
+function depsOf(pkg) {
+  return JSON.stringify({ dependencies: pkg?.dependencies ?? {}, devDependencies: pkg?.devDependencies ?? {} })
+}
+
+function readJson(file) {
+  try {
+    return JSON.parse(readFileSync(file, 'utf8'))
+  } catch {
+    return null
+  }
+}
+
+let templateLockHash = null
+/** 模板 lockfile 的摘要（模板运行期不变，算一次）。 */
+export function templateLockKey() {
+  if (templateLockHash === null) {
+    const hash = createHash('sha256')
+    for (const { lockfile } of INSTALL_SOURCES) hash.update(readFileSync(join(templateDir(), lockfile)))
+    templateLockHash = hash.digest('hex').slice(0, 16)
+  }
+  return templateLockHash
+}
 
 /** 把一段命令输出压成环形日志，面板只读最后几十行。 */
 function pushLog(log, line) {
@@ -27,8 +88,11 @@ function pushLog(log, line) {
  */
 function run(spec, onLine, timeoutMs) {
   return new Promise((resolvePromise) => {
-    const child = spawn(spec.command, spec.args, {
+    // Windows 上 .cmd 不能直接 spawn（Node 20.12+ 报 EINVAL），要走 shell；路径可能带空格
+    const viaShell = process.platform === 'win32' && /\.(cmd|bat)$/i.test(spec.command)
+    const child = spawn(viaShell ? `"${spec.command}"` : spec.command, spec.args, {
       cwd: spec.cwd,
+      shell: viaShell,
       env: { ...process.env, ...spec.env, NO_COLOR: '1', FORCE_COLOR: '0', CI: '1' },
       stdio: ['ignore', 'pipe', 'pipe'],
     })
@@ -95,6 +159,23 @@ export class Workspace {
     return this.path('open-slide.config.ts')
   }
 
+  get markerFile() {
+    return this.path('node_modules', INSTALL_MARKER)
+  }
+
+  /** 工作区依赖和模板一致：用模板 lockfile 走 npm ci；不一致说明用户自己加过依赖。 */
+  isManaged() {
+    return depsOf(readJson(this.path('package.json'))) === depsOf(readJson(join(templateDir(), 'package.json')))
+  }
+
+  /** 依赖装好且验证过；受管工作区还要求是按当前模板 lockfile 装的（老版本装的会重装一次）。 */
+  isInstalled() {
+    if (!exists(this.binPath)) return false
+    const marker = readJson(this.markerFile)
+    if (!marker) return false
+    return !this.isManaged() || marker.lock === templateLockKey()
+  }
+
   /**
    * 确保 open-slide.config.ts 带上面板需要的东西（尤其 base）。
    * 这个文件归工作台管：用户手改过也会被模板内容覆盖，README 里写明了。
@@ -115,7 +196,7 @@ export class Workspace {
    */
   async status() {
     const scaffolded = exists(this.path('package.json'))
-    const installed = exists(this.binPath)
+    const installed = this.isInstalled()
     let version = null
     if (installed) {
       try {
@@ -162,7 +243,7 @@ export class Workspace {
   }
 
   /**
-   * 后台装依赖（npm install）。重复调用复用同一个任务。
+   * 后台装依赖（npm ci，按 INSTALL_SOURCES 依次回退）。重复调用复用同一个任务。
    * @param {(line: string) => void} [onLine] - 额外日志回调。
    * @returns {Promise<{ok: boolean, error: string|null}>} 结果。
    */
@@ -173,31 +254,62 @@ export class Workspace {
       pushLog(this.installState.log, line)
       onLine(line)
     }
-    const npm = resolveNpm()
-    note(`在 ${this.root} 安装 open-slide 依赖…`)
-    this.installing = run(
-      { command: npm.command, args: [...npm.prefixArgs, 'install', '--no-audit', '--no-fund', '--loglevel=error'], cwd: this.root },
-      note,
-      INSTALL_TIMEOUT_MS,
-    ).then(async (result) => {
-      if (result.ok && !exists(this.binPath)) {
-        this.installState.status = 'error'
-        this.installState.error = '依赖装完了但找不到 @open-slide/core，检查网络或 npm 镜像'
-        note(this.installState.error)
-      } else if (result.ok) {
-        this.installState.status = 'done'
-        this.installState.error = null
-        note('依赖装好了。')
-      } else {
-        this.installState.status = 'error'
-        this.installState.error = result.error ?? '安装失败'
-        note(`安装失败：${this.installState.error}`)
-      }
+    this.installing = this.runInstall(note).catch(err => err?.message ?? String(err)).then(async (error) => {
+      this.installState.status = error ? 'error' : 'done'
+      this.installState.error = error
+      note(error ? `安装失败：${error}` : '依赖装好了。')
       this.installing = null
-      if (this.installState.status === 'done') await this.syncSkills(note).catch(() => {})
-      return { ok: this.installState.status === 'done', error: this.installState.error }
+      if (!error) await this.syncSkills(note).catch(() => {})
+      return { ok: !error, error }
     })
     return this.installing
+  }
+
+  /**
+   * 逐个源尝试安装并验证，成功就写标记。
+   * @param {(line: string) => void} note - 日志。
+   * @returns {Promise<string|null>} 最后一次的错误；null 表示成功。
+   */
+  async runInstall(note) {
+    const npm = resolveNpm()
+    const managed = this.isManaged()
+    note(`在 ${this.root} 安装 open-slide 依赖${managed ? '' : '（package.json 改过，按工作区自己的依赖装）'}…`)
+    let error = '安装失败'
+    for (const source of INSTALL_SOURCES) {
+      note(`→ ${source.registry}`)
+      if (managed) await copyFile(join(templateDir(), source.lockfile), this.path('package-lock.json'))
+      const result = await run(
+        { command: npm.command, args: [...npm.prefixArgs, ...npmInstallArgs(managed ? 'ci' : 'install', source.registry)], cwd: this.root },
+        note,
+        INSTALL_TIMEOUT_MS,
+      )
+      if (!result.ok) {
+        error = result.error ?? '安装失败'
+        continue
+      }
+      error = await this.verifyRuntime(note)
+      if (error) continue
+      const marker = { lock: managed ? templateLockKey() : null, registry: source.registry, at: new Date().toISOString() }
+      await writeFile(this.markerFile, `${JSON.stringify(marker)}\n`, 'utf8')
+      return null
+    }
+    return error
+  }
+
+  /**
+   * 实际加载一遍 open-slide 依赖的原生绑定（rolldown / lightningcss / tailwind oxide）。
+   * @param {(line: string) => void} note - 日志。
+   * @returns {Promise<string|null>} 错误；null 表示通过。
+   */
+  async verifyRuntime(note) {
+    if (!exists(this.binPath)) return '依赖装完了但找不到 @open-slide/core'
+    const runtime = nodeRuntime()
+    const result = await run(
+      { command: runtime.command, args: ['--input-type=module', '-e', VERIFY_SCRIPT], cwd: this.root, env: runtime.env },
+      note,
+      VERIFY_TIMEOUT_MS,
+    )
+    return result.ok ? null : `依赖装完但加载失败（${result.error}），可能缺了本平台的原生绑定`
   }
 
   /**
@@ -236,7 +348,7 @@ export class Workspace {
    * @returns {Promise<{status: string, log: string[], error: string|null}>} 安装状态。
    */
   async ensureInstalled() {
-    if (exists(this.binPath)) return { status: 'done', log: this.installState.log.slice(-40), error: null }
+    if (this.isInstalled()) return { status: 'done', log: this.installState.log.slice(-40), error: null }
     const result = await this.installDeps()
     return { status: this.installState.status, log: this.installState.log.slice(-40), error: result.error ?? this.installState.error }
   }
@@ -260,7 +372,7 @@ export class Workspace {
       }
       try {
         const result = await run(
-          { command: process.execPath, args: [this.binPath, 'build'], cwd: this.root },
+          { command: nodeRuntime().command, args: [this.binPath, 'build'], cwd: this.root, env: nodeRuntime().env },
           (line) => pushLog(log, line),
           BUILD_TIMEOUT_MS,
         )

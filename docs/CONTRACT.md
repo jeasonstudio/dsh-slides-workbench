@@ -147,7 +147,8 @@ export class DevServer {
 ## Agent 工具与 skill（tools-skills）要求
 
 `src/skills.js`：`export function registerSkills(ctx)`，用 `ctx.get('skills')?.register({...})`
-注册两个 skill（optional service，缺失时安静跳过）：
+注册 open-slide 官方的 5 个 skill（`skills/<name>/SKILL.md`，正文前拼上「环境映射」，`slide-authoring` 附上
+`references/*.md`；optional service，缺失时安静跳过）。下面是早期自写的两个 skill 的设计，已被官方技能取代：
 
 - `slides-authoring`（技术参考，必读）—— 从 `skills/slides-authoring.md` 读正文：1920×1080 画布、
   file contract（`export default [...]`、`meta`、`notes`）、常用布局与类型尺度、`Steps/Step`、
@@ -172,7 +173,11 @@ export class DevServer {
 
 另注册一段 system prompt（`ctx.get('systemPrompt')?.section({ name:'plugin:slides-workbench',
 order: 0 … })`，order 用 `getSectionOrder` 拿不到就写 `500`）：工作区在哪、deck 是 open-slide 的
-`slides/<id>/index.tsx`、写页面前先看 `slides-authoring` skill、不要碰 `package.json`。
+`slides/<id>/index.tsx`、写页面前先看 `slide-authoring` skill、不要碰 `package.json`。
+
+另有 `slides_context` / `slides_themes` / `slides_write_theme`（读 `current.json`、读写 `themes/`），
+以及 `POST /slides-workbench/themes/sync`（内置官方模板合并进工作区）和 `POST /slides-workbench/reveal`
+（在系统文件管理器里打开工作区）。
 
 ## 构建与验证
 
@@ -183,48 +188,34 @@ node -e "import('./src/host.js').then(m=>console.log(Object.keys(m)))"   # host 
 node --test test/*.test.js  # 有测试就跑
 ```
 安装/验证由 Lead 通过 `plugin_manager install_bundle` 完成，不要自己跑 pnpm/install_bundle。
-## Agent 桥（编辑器里的 Agent 面板 = DSH）
+## Agent 面板 = DSH 原生对话流（open-slide 的外壳，DSH 的内容）
 
-open-slide 的 provider 是硬编码的 claude/codex（走各自 CLI），没有自定义入口。插件因此把
-`/__agent/*` 在反代层整段接管（`src/agent-bridge.js`），协议按 open-slide 的
-`AgentSession` / `AgentItem` / `AgentStreamEvent` 复刻：
+早期版本把 open-slide 的 `/__agent/*` 整段接管、翻译成 DSH 会话（`src/agent-bridge.js`），已删除。
+现在 open-slide 编辑器里的 Agent 面板外壳照旧（工具栏按钮 `[data-agent-ui]`、快捷键 A、停靠栏 `[data-agent-dock]` 的开合与拖宽），
+面板内容换成 DSH 原生对话：
 
-| 端点 | 行为 |
-| --- | --- |
-| `GET /__agent/status` | 只报一个 provider：`id: claude`（类型限制）、`name: DeepSeek Harness`、`models: [{id:'default', label:'当前会话的模型'}]` |
-| `GET /__agent/events` | 自己的 SSE：`: connected` → `session` / `item` / `session-removed`；15s 心跳 |
-| `GET/POST /__agent/sessions` | 列表 / 新建：新建时用 `ctx.get('sessionController').create({ cwd: 工作区 })` 建一个真 DSH 会话 |
-| `GET/DELETE /__agent/sessions/:id` | 读全量 items / 移除映射（打断在跑的 turn） |
-| `POST /__agent/sessions/:id/messages` | 把 prompt + 工作台上下文写成 DSH 用户消息，`agent.followup()`；同一会话还在跑时返回 409 |
-| `POST /__agent/sessions/:id/stop` | `agent.cancel({ kind: 'user' })` |
-| `POST /__agent/sessions/:id/respond` | v1：把回答/权限结果当成一条普通消息发进去 |
-| `POST /__agent/install` | 空操作 |
-
-事件 → item 的映射（`toItem`）：`user/message`（source.kind === 'user'）→ user；
-`assistant/message` → assistant；`tool/call` → tool(running) + `tool/result` → 同 id 打补丁
-（done/error）；`turn/end` → result（aborted 标记）。轮询 `ctx.get('sessionQuery').observeSession()`
-（900ms，只在有 SSE 连接时），按 seq 游标增量翻译，通过 SSE 推给面板。
-
-会话映射：**一个 open-slide agent session ↔ 一个 DSH 会话**（用户选定），DSH 会话的 cwd 是
-open-slide 工作区，所以侧栏可见、可继续、可搜索。依赖 `agents` / `sessionController` /
-`sessionQuery` 三个 Host 服务；缺任意一个时 `status.enabled = false`，面板显示未连接而不是假装可用。
-
-已接：
-- **token 级流式**：`agent/assistant-stream` 的 `text-delta` 直接推成 open-slide 的 `delta`，
-  面板里边生成边显示；`assistant/message` 落地时就地补完那条流式 item，不重复。
-- **真实模型下拉**：`sessionController.modelCatalog()` → `models[]`（id 形如 `provider/model`），
-  面板里选了就 `sessionController.selectModel()` 落到这个 DSH 会话上。
-- **会话标题**：`sessionTitle.rename()`，侧栏一眼看出是哪个 deck 的对话。
-- **失败/中断**：`turn/end` 的 `error` 变成 error item，`aborted` 变成带标记的 result。
-
-- **提问 → 选项**：接管 `user-questions/request` 瀑布（属于本桥的会话才拦），把问题画成
-  open-slide 的 `question` item 并挂起；面板的 `/respond` 把答案转成
-  `{ answers: [{ id, selected }] }` 返回给 DSH，工具继续跑。
-- **插话**：会话在跑时再发消息走 `agent.steer()`，不再是 409。
-- **上下文常驻**：每次发消息都读 `<工作区>/node_modules/.open-slide/current.json`（deck /
-  页码 / 选中）；创建会话时还给这个 agent 挂了 `systemPrompt.section`，说明这是工作台对话。
-- **品牌图标**：open-slide 的 provider 图标按 id 写死（claude `viewBox="0 0 256 257"` /
-  codex `100 100 411 411`）。iframe 里就地改这两个 SVG 的 viewBox 和子节点换成工作台图标
-  （只改自身属性/子节点，不动 React 的节点身份），并用 MutationObserver 在重渲染后补上。
-
-未接（有意）：DSH 的审批 / permission item —— 审批留在 DSH 自己的通道里更安全，面板不复制。
+- **渲染**：照 DSH 子代理侧栏对话（`dsh-client-ui-subagent` 的 `sidebar-chat`）。`main` slot 的面板 entry 声明会话作用域子 slot
+  `children: { 'slides.chat.conversation': { kind: 'single', scope: 'session' } }`，拿到 `renderSlot` 与 `SessionProvider`；
+  `<SessionProvider session={reference}>{renderSlot('slides.chat.conversation')}</SessionProvider>`；这个子 slot 的 entry
+  （`client/chat.jsx` 的 `ChatConversation`）渲染 DSH 的可复用对话工厂
+  `renderFactorySlot('conversation.content', { variant: 'embedded', phase, hero }, { slots: { views } })`，视图固定在 Chat。
+- **位置**：DSH 的组件、样式、弹层都在外层文档，不能塞进 iframe（会和 open-slide 的页面样式互相污染、弹层定位错乱），
+  所以对话渲染在外层，精确盖在 iframe 里 `[data-agent-dock] > .sidebar-swap` 的可见区域上（让出左侧 6px 拖宽条），
+  MutationObserver / ResizeObserver / 开合动画逐帧测量跟随；open-slide 原来的面板内容 `visibility: hidden`。
+  面板开着时编辑器右边缘那列小按钮让到面板左边。
+- **不用 hero**：`conversation.content` 一律按 `phase: 'active', hero: false` 渲染（历史加载中为 `settling`），空白会话也是消息区 + 贴底输入框。
+- **主题**：测量停靠栏时一并读 iframe `html` 上 open-slide 的 shadcn 变量（`--sidebar`/`--background`/`--muted`/`--border`/`--primary`…，
+  `--sidebar` 取停靠栏实际背景色），在 `.sw-chat` 上覆盖 DSH 的语义 token（`--dsw-alias-bg-base`、`--dsw-specific-input-major`、
+  `--dsw-specific-bubble`、`--dsw-alias-button-info-fill`、`--dsw-alias-label-*`、`--dsw-alias-border-l*` 等，见 `dshTokens()`），
+  只作用于这棵子树；html 的 class 变化（明暗）会触发重读。
+- **尺寸**：`.sw-chat` 上覆盖 `--dsh-content-font-size`（12.5px）及其派生的 delta / secondary（DSH 在 body 上已算好，必须一起覆盖）、
+  `--dsw-radius-*`（8px / 5px 体系）；消息区与输入框边距用后代选择器覆盖 `_embeddedBody` 上的 `--dsh-chat-content-width` /
+  `--dsh-composer-side-clearance` / `--dsh-composer-card-max-width`，去掉 `_scrollBody` 的滚动条槽位；轮间距 12px、用户消息 88% 宽。
+- **默认宽度**：第一次进编辑器前把 `open-slide:agent-panel-width` 设成 Format / Design 的宽度（`open-slide:editor-panel-width`，默认 320），
+  用 `slides-workbench.agent-width-seeded` 标记只做一次。
+- **会话**（`client/session.js`）：每个 deck 一段会话，deck → 会话 id 存在 localStorage。`ctx.workspaces.create({ path })`
+  把工作区登记成 Workspace（幂等；只有 cwd 的会话输入框会要求先选 Workspace），`ctx.sessions.create({ workspaceId })` 建会话并
+  `rename(deck 标题)`；首页提交时 `using(...).ready` → `session.prompt([{ type: 'text', text }], 'queue')`，并预先写
+  `localStorage['open-slide:agent-dock'] = '1'` 让编辑器打开时面板开着；渲染期间 `ctx.sessions.retain(id, { source: 'slidesChat' })`。
+- 缺 `sessions` / `workspaces` 服务时面板里只显示一句说明。open-slide 自带 agent 后端：`open-slide.config.ts` 里 `agent: { enabled: false }`
+  （只影响 `/__agent/status` 的 enabled，按钮和停靠栏照常渲染），`/__agent` 原样转发给 dev server。

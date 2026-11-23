@@ -1,28 +1,39 @@
 // 界面语言：中文默认，英文全量。key 是语义 key，{name} 是插值占位符。
-// 语言优先级：用户手动切换（localStorage override）> DSH client locale > navigator.language。
+// 语言跟随 DSH 客户端的 locale 服务（见 index.jsx），拿不到时用 navigator.language 兜底。
 import React from 'react'
 
 const ZH = {
   'app.name': '演示文稿工作台',
-  'home.eyebrow': '演示文稿工作台',
-  'home.line1': '想做一份',
-  'home.line2': '能讲的演示？',
-  'home.title': '想做一份什么演示？',
+  'home.date': '{m} 月 {d} 日 · {w}',
+  'home.week.0': '周日', 'home.week.1': '周一', 'home.week.2': '周二', 'home.week.3': '周三', 'home.week.4': '周四', 'home.week.5': '周五', 'home.week.6': '周六',
+  'home.hint': '点击墙上的卡片试试',
+  'home.hintMods': '风格要求会接在这句话后面一起发出去；退格可以删掉最后一个。',
+  'home.mods': '已叠加的风格要求',
+  'home.modRemove': '去掉「{label}」',
+  'home.card.use': '用这句',
+  'home.card.add': '叠加',
+  'home.kind.prompt': '想法',
+  'home.kind.quote': '演讲心法',
+  'home.kind.palette': '配色',
+  'home.filter.all': '全部',
+  'home.filter.cover': '封面',
+  'home.filter.prompt': '想法',
+  'home.filter.quote': '心法',
+  'home.filter.palette': '配色',
+  'home.lucky': '手气不错',
+  'home.mine': '我的演示 · {n}',
+  'home.mineEmpty': '我的演示',
+  'home.themes': '模板',
+  'home.themeMod': '使用主题 themes/{id}（{name}）',
+  'frame.useTheme': '用这个模板',
+  'home.dock': '灵感墙',
+  'home.zoomIn': '放大',
+  'home.zoomOut': '缩小',
+  'home.recenter': '回到中心',
   'home.placeholder': '一句话说清主题、受众和风格，剩下的交给 AI……',
-  'home.hint': 'Enter 开始 · Shift+Enter 换行',
   'home.submit': '开始做',
-  'home.browse': '浏览全部幻灯片',
-  'home.recent': '最近的 {n} 份演示',
-  'home.empty': '还没有演示，说一句话就开始了',
-  'home.pages': '{n} 页',
   'home.untitled': '未命名演示',
   'home.failed': '没建成：{error}',
-  'home.tpl.launch': '产品发布',
-  'home.tpl.review': '季度复盘',
-  'home.tpl.talk': '技术分享',
-  'home.tpl.launchPrompt': '帮我做一个产品发布演示：主题是一款新的开发者工具，受众是现有用户，8 页，克制、留白多，带讲稿。',
-  'home.tpl.reviewPrompt': '帮我做一个季度复盘演示：讲数据、结论和下一步，6 页，深色，带讲稿。',
-  'home.tpl.talkPrompt': '帮我做一个技术分享演示：讲我们这次架构调整是怎么做的，10 页，带代码片段和讲稿。',
   'nav.slides': '幻灯片',
   'nav.themes': '主题',
   'nav.assets': '素材',
@@ -30,10 +41,31 @@ const ZH = {
   'nav.themes.title': '主题 · open-slide',
   'nav.assets.title': '素材 · open-slide',
   'panel.label': '演示文稿',
+  'frame.exportFailed': '导出没能保存：{error}',
+  'frame.shareFailed': '没能生成只读预览链接：{error}',
+  'home.handoffFailed': 'deck 建好了，但没能交给 Agent 面板：{error}。可以在编辑器的 Agent 面板里直接描述需求。',
+  'chat.context': '（演示文稿工作台上下文：deck = {id}，标题「{title}」。这是用户刚在首页新建的 deck，按需求用 slides_* 工具写完整个 deck；先加载 create-slide 和 slide-authoring skill。）',
+  'chat.title': 'Agent',
+  'chat.new': '新对话',
+  'chat.close': '关闭 Agent 面板',
+  'chat.unavailable': '当前 DSH 没有会话服务，无法在这里对话。',
+  'chat.failed': '没能打开对话：{error}',
+  'frame.revealWorkspace': '在访达中显示工作区',
 
   'common.close': '关闭',
   'common.cancel': '取消',
   'common.retry': '重试',
+  'load.boot': '正在打开…',
+  'load.install': '首次使用，正在安装 open-slide…',
+  'load.installCaption': '只需安装一次，通常一两分钟',
+  'load.server': '正在启动预览…',
+  'load.bootFailed': '工作台没有响应',
+  'load.installFailed': 'open-slide 没能装好',
+  'load.serverFailed': '预览没能启动',
+  'load.unknownError': '未知错误',
+  'load.showLog': '查看日志',
+  'load.installLog': '安装日志',
+  'load.serverLog': '预览服务日志',
   'common.copied': '已复制',
   'common.copyFailed': '复制失败',
   'common.create': '创建',
@@ -42,8 +74,6 @@ const ZH = {
   'common.delete': '删除',
   'common.loading': '处理中…',
 
-  'lang.switch': '切换语言',
-  'lang.toggle': 'English',
 
   'status.running': '服务器运行中',
   'status.starting': '服务器启动中',
@@ -51,39 +81,13 @@ const ZH = {
   'status.error': '服务器出错',
 
   'frame.title': '演示文稿工作台',
-  'frame.loading': '正在打开 open-slide…',
   'frame.reload': '重新加载',
   'frame.home': '回到首页',
   'frame.openExternal': '在浏览器里打开',
-  'boot.loading': '正在读取工作台…',
-  'error.title': '连不上工作台',
-  'error.lead': '确认 DSH 还在运行，然后再试一次。',
-  'error.network': '网络请求失败，检查一下 DSH 是否还在运行。',
+  'error.network': '连不上 DSH，确认它还在运行，然后再试一次。',
   'error.request': '请求失败（{status}）',
 
-  'setup.title': '正在准备工作台',
-  'setup.lead': '这是 open-slide 的演示文稿工作台。AI 写的每个 deck 和它依赖的东西，都存在本机这个目录里：',
-  'setup.pathLabel': '工作区路径',
-  'setup.pathUnknown': 'DSH 默认目录',
-  'setup.deps': '插件装好就会自动准备这里：安装 @open-slide/core（几十 MB，取决于网络），之后打开面板直接可用。',
-  'setup.action': '继续准备',
-  'setup.running': '正在准备…',
-  'setup.logTitle': '安装日志',
-  'setup.failed': '准备失败：{error}',
-  'setup.hint': '通常不需要你做什么：装好插件就会自动准备，重试只用于失败或中断之后。',
 
-  'server.startingTitle': '正在启动预览服务器…',
-  'server.errorTitle': '预览服务器没能启动',
-  'server.stoppedTitle': '预览服务器处于停止状态',
-  'server.startingLead': 'open-slide dev 正在启动，起来之后预览、演示和编辑器就都能用了。',
-  'server.errorLead': '上一次启动失败：{error}',
-  'server.stoppedLead': '启动 dev server 之后才能预览、演示和编辑 deck。',
-  'server.unknownError': '未知错误',
-  'server.logTitle': '服务器日志',
-  'server.actionStart': '启动服务器',
-  'server.actionRestart': '重新启动',
-  'server.actionStop': '停止',
-  'server.hint': 'dev server 只监听 localhost，仅本机可以访问。',
 
   'empty.title': '还没有演示文稿',
   'empty.lead': '直接对 AI 说一句话就能开始：它写好每一页，你在这里预览。',
@@ -147,36 +151,49 @@ const ZH = {
 
   'open.editor': '打开完整编辑器',
 
-  'time.justNow': '刚刚',
-  'time.minutes': '{n} 分钟前',
-  'time.hours': '{n} 小时前',
-  'time.days': '{n} 天前',
-  'time.never': '从未',
 
   'log.empty': '暂时没有输出。',
 }
 
 const EN = {
   'app.name': 'Slides Workbench',
-  'home.eyebrow': 'Slides workbench',
-  'home.line1': 'What are you',
-  'home.line2': 'presenting today?',
-  'home.title': 'What are you presenting?',
+  'home.date': '{w}, {mon} {d}',
+  'home.week.0': 'Sunday', 'home.week.1': 'Monday', 'home.week.2': 'Tuesday', 'home.week.3': 'Wednesday', 'home.week.4': 'Thursday', 'home.week.5': 'Friday', 'home.week.6': 'Saturday',
+  'home.line1a': 'One sentence',
+  'home.line1b': 'starts a draft,',
+  'home.line2a': 'the agent',
+  'home.line2b': 'writes the pages,',
+  'home.line3a': 'you just',
+  'home.line3b': 'tell it well',
+  'home.line3c': '.',
+  'home.hint': 'Try clicking a card on the wall',
+  'home.hintMods': 'Style notes are sent along with your sentence; Backspace removes the last one.',
+  'home.mods': 'Stacked style notes',
+  'home.modRemove': 'Remove “{label}”',
+  'home.card.use': 'Use this',
+  'home.card.add': 'Stack',
+  'home.kind.prompt': 'Idea',
+  'home.kind.quote': 'Craft',
+  'home.kind.palette': 'Palette',
+  'home.filter.all': 'All',
+  'home.filter.cover': 'Covers',
+  'home.filter.prompt': 'Ideas',
+  'home.filter.quote': 'Craft',
+  'home.filter.palette': 'Palettes',
+  'home.lucky': 'Surprise me',
+  'home.mine': 'My decks · {n}',
+  'home.mineEmpty': 'My decks',
+  'home.themes': 'Templates',
+  'home.themeMod': 'use theme themes/{id} ({name})',
+  'frame.useTheme': 'Use this template',
+  'home.dock': 'Inspiration wall',
+  'home.zoomIn': 'Zoom in',
+  'home.zoomOut': 'Zoom out',
+  'home.recenter': 'Back to center',
   'home.placeholder': 'One sentence about the topic, audience and tone — the agent writes the pages.',
-  'home.hint': 'Enter to start · Shift+Enter for a new line',
   'home.submit': 'Start',
-  'home.browse': 'Browse all slides',
-  'home.recent': '{n} recent decks',
-  'home.empty': 'No decks yet — one sentence is enough to start',
-  'home.pages': '{n} pages',
   'home.untitled': 'Untitled deck',
   'home.failed': 'Could not create: {error}',
-  'home.tpl.launch': 'Product launch',
-  'home.tpl.review': 'Quarterly review',
-  'home.tpl.talk': 'Tech talk',
-  'home.tpl.launchPrompt': 'Draft a product launch deck: a new developer tool, audience is existing users, 8 pages, restrained with lots of whitespace, speaker notes included.',
-  'home.tpl.reviewPrompt': 'Draft a quarterly review deck: numbers, conclusions, next steps. 6 pages, dark, with speaker notes.',
-  'home.tpl.talkPrompt': 'Draft a tech talk deck about our architecture migration: 10 pages, code snippets and speaker notes.',
   'nav.slides': 'Slides',
   'nav.themes': 'Themes',
   'nav.assets': 'Assets',
@@ -184,10 +201,31 @@ const EN = {
   'nav.themes.title': 'Themes · open-slide',
   'nav.assets.title': 'Assets · open-slide',
   'panel.label': 'Slides',
+  'frame.exportFailed': 'Could not save the export: {error}',
+  'frame.shareFailed': 'Could not create the read-only preview link: {error}',
+  'home.handoffFailed': 'The deck is ready, but the Agent panel did not take the brief: {error}. Describe it in the editor’s Agent panel.',
+  'chat.context': '(Slides workbench context: deck = {id}, title "{title}". The user just created this deck from the home page; write the whole deck with the slides_* tools. Load the create-slide and slide-authoring skills first.)',
+  'chat.title': 'Agent',
+  'chat.new': 'New chat',
+  'chat.close': 'Close the Agent panel',
+  'chat.unavailable': 'This DSH has no session service, so chat is unavailable here.',
+  'chat.failed': 'Could not open the chat: {error}',
+  'frame.revealWorkspace': 'Reveal workspace in Finder',
 
   'common.close': 'Close',
   'common.cancel': 'Cancel',
   'common.retry': 'Retry',
+  'load.boot': 'Opening…',
+  'load.install': 'First run: installing open-slide…',
+  'load.installCaption': 'One-time setup, usually a minute or two',
+  'load.server': 'Starting the preview…',
+  'load.bootFailed': 'The workbench isn’t responding',
+  'load.installFailed': 'open-slide couldn’t be installed',
+  'load.serverFailed': 'The preview couldn’t start',
+  'load.unknownError': 'unknown error',
+  'load.showLog': 'Show log',
+  'load.installLog': 'Install log',
+  'load.serverLog': 'Preview server log',
   'common.copied': 'Copied',
   'common.copyFailed': 'Couldn’t copy',
   'common.create': 'Create',
@@ -196,8 +234,6 @@ const EN = {
   'common.delete': 'Delete',
   'common.loading': 'Working…',
 
-  'lang.switch': 'Switch language',
-  'lang.toggle': '中文',
 
   'status.running': 'Server running',
   'status.starting': 'Server starting',
@@ -205,39 +241,13 @@ const EN = {
   'status.error': 'Server error',
 
   'frame.title': 'Slides workbench',
-  'frame.loading': 'Opening open-slide…',
   'frame.reload': 'Reload',
   'frame.home': 'Back to home',
   'frame.openExternal': 'Open in browser',
-  'boot.loading': 'Reading the workbench…',
-  'error.title': 'Couldn’t reach the workbench',
-  'error.lead': 'Check that DSH is still running, then try again.',
-  'error.network': 'The request failed. Check that DSH is still running.',
+  'error.network': 'Could not reach DSH. Make sure it is still running, then try again.',
   'error.request': 'Request failed ({status})',
 
-  'setup.title': 'Preparing the workbench',
-  'setup.lead': 'This is an open-slide workbench. Every deck the AI writes lives in this folder on your machine, together with its dependencies:',
-  'setup.pathLabel': 'Workspace',
-  'setup.pathUnknown': 'Default DSH folder',
-  'setup.deps': 'The plugin prepares this folder on install: it installs @open-slide/core (a few dozen MB, depending on your network) once, then the panel is ready.',
-  'setup.action': 'Resume setup',
-  'setup.running': 'Preparing…',
-  'setup.logTitle': 'Install log',
-  'setup.failed': 'Preparation failed: {error}',
-  'setup.hint': 'Usually nothing to do here: the plugin prepares the workspace on install. Retry only after a failure or interruption.',
 
-  'server.startingTitle': 'Starting the preview server…',
-  'server.errorTitle': 'The preview server didn’t start',
-  'server.stoppedTitle': 'The preview server is stopped',
-  'server.startingLead': 'open-slide dev is booting. Previews, presentations, and the editor unlock as soon as it’s ready.',
-  'server.errorLead': 'The last attempt failed: {error}',
-  'server.stoppedLead': 'Start the dev server to preview, present, and edit decks.',
-  'server.unknownError': 'unknown error',
-  'server.logTitle': 'Server log',
-  'server.actionStart': 'Start server',
-  'server.actionRestart': 'Restart',
-  'server.actionStop': 'Stop',
-  'server.hint': 'The dev server only listens on localhost, so it stays private to this machine.',
 
   'empty.title': 'No decks yet',
   'empty.lead': 'Just ask the AI for one: it writes every page, and you preview it here.',
@@ -301,11 +311,6 @@ const EN = {
 
   'open.editor': 'Open full editor',
 
-  'time.justNow': 'just now',
-  'time.minutes': '{n} min ago',
-  'time.hours': '{n} h ago',
-  'time.days': '{n} d ago',
-  'time.never': 'never',
 
   'log.empty': 'Nothing here yet.',
 }
@@ -313,18 +318,12 @@ const EN = {
 const DICTS = { zh: ZH, en: EN }
 const listeners = new Set()
 
-// 用户手动切过的语言单独存；没有它就一直跟随 DSH 的语言设置
-const OVERRIDE_KEY = 'slides-workbench.lang.override'
-const LEGACY_KEY = 'slides-workbench.lang'
-
-function readStored(key) {
-  try {
-    const value = localStorage.getItem(key)
-    if (value === 'zh' || value === 'en') return value
-  } catch {
-    // 隐私模式里 localStorage 可能不可用
-  }
-  return null
+// 早期版本有手动切换语言、写在 localStorage 里；现在一律跟随 DSH，顺手清掉
+try {
+  localStorage.removeItem('slides-workbench.lang.override')
+  localStorage.removeItem('slides-workbench.lang')
+} catch {
+  // 隐私模式里 localStorage 可能不可用
 }
 
 function normalize(value) {
@@ -334,61 +333,31 @@ function normalize(value) {
   return tag.startsWith('zh') ? 'zh' : 'en'
 }
 
-/** 浏览器语言只是最后兜底：DSH 的 locale 和用户的手动选择都优先。 */
+/** 浏览器语言只是最后兜底：DSH 的语言优先。 */
 function detectBrowser() {
   if (typeof navigator === 'undefined') return 'zh'
   return normalize(navigator.language) ?? 'zh'
 }
 
-// 旧版本把语言写在 slides-workbench.lang 里，迁移成 override
-let override = readStored(OVERRIDE_KEY) ?? readStored(LEGACY_KEY)
-if (override && !readStored(OVERRIDE_KEY)) {
-  try {
-    localStorage.setItem(OVERRIDE_KEY, override)
-    localStorage.removeItem(LEGACY_KEY)
-  } catch {
-    // 迁移失败就继续用旧 key 读到的值
-  }
-}
-
-// DSH 当前语言；apply 阶段由 client locale 服务注入
+// DSH 当前语言；由 index.jsx 从 locale 服务接进来
 let host = null
 
 // 模块初始化就定下初值：sidebar label thunk 在 apply 里就会被调用
-let current = override ?? host ?? detectBrowser()
+let current = host ?? detectBrowser()
 
-/** apply 阶段把 DSH 的语言接进来；拿不到有效值就不动。 */
+/** 把 DSH 的语言接进来；拿不到有效值就不动。 */
 export function setHostLang(active) {
   const next = normalize(active)
   if (!next || next === host) return
   host = next
   const before = current
-  current = override ?? host ?? detectBrowser()
+  current = host ?? detectBrowser()
   if (current !== before) listeners.forEach((fn) => fn())
 }
 
 /** 当前生效的语言：'zh' 或 'en'。 */
 export function lang() {
   return current
-}
-
-/** 用户手动切语言：写进 override，之后不再跟随 DSH。 */
-export function setLang(next) {
-  if (next !== 'zh' && next !== 'en') return
-  const before = current
-  override = next
-  try {
-    localStorage.setItem(OVERRIDE_KEY, next)
-    localStorage.removeItem(LEGACY_KEY)
-  } catch {
-    // 存不了就只在这次会话里生效
-  }
-  current = override
-  if (current !== before) listeners.forEach((fn) => fn())
-}
-
-export function toggleLang() {
-  setLang(current === 'zh' ? 'en' : 'zh')
 }
 
 export function subscribeLang(fn) {
@@ -416,20 +385,4 @@ export function t(key, vars) {
   if (text === undefined) text = key
   if (!vars) return text
   return text.replace(/\{(\w+)\}/g, (match, name) => (vars[name] === undefined ? match : String(vars[name])))
-}
-
-/** 相对时间：刚刚 / n 分钟前 / n 小时前 / n 天前 / 具体日期。 */
-export function formatWhen(timestamp) {
-  if (!timestamp) return t('time.never')
-  const diff = Date.now() - Number(timestamp)
-  if (!Number.isFinite(diff) || diff < 0) return t('time.justNow')
-  if (diff < 60_000) return t('time.justNow')
-  if (diff < 3_600_000) return t('time.minutes', { n: Math.round(diff / 60_000) })
-  if (diff < 86_400_000) return t('time.hours', { n: Math.round(diff / 3_600_000) })
-  if (diff < 7 * 86_400_000) return t('time.days', { n: Math.round(diff / 86_400_000) })
-  try {
-    return new Date(Number(timestamp)).toLocaleDateString(current === 'zh' ? 'zh-CN' : 'en', { month: 'short', day: 'numeric' })
-  } catch {
-    return new Date(Number(timestamp)).toISOString().slice(0, 10)
-  }
 }

@@ -7,6 +7,7 @@
 //
 // 不 import 任何 @deepseek-ai/* 包；注册的就是普通 ToolDefinition 对象
 // （name / description / parameters(JSON Schema) / output:{schema,render} / execute）。
+import { mkdir, readdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
 /** 所有工具的输出都是给人读的纯文本（对象会被安全地序列化）。 */
@@ -25,7 +26,7 @@ const EMPTY_PARAMETERS = {
 }
 
 /** 每个工具描述里都要出现的提醒，避免模型绕过 skill 或改坏工作区。 */
-const HINT = 'deck 是 open-slide 的 slides/<id>/index.tsx；写页面前先加载 slides-authoring skill；不要修改 package.json。'
+const HINT = 'deck 是 open-slide 的 slides/<id>/index.tsx；写页面前先加载 slide-authoring skill；不要修改 package.json。'
 
 /**
  * 注册 dsh-slides-workbench 的全部 agent 工具。
@@ -69,7 +70,7 @@ export function registerTools(ctx, deps) {
 
       if (!status.scaffolded) {
         lines.push('deck：工作区还没初始化，暂无 deck。')
-        lines.push('下一步：在 DSH 侧栏「演示文稿」面板点「初始化工作台」完成安装；装好后用 slides_create_deck 建 deck。')
+        lines.push('下一步：打开 DSH 侧栏的「演示文稿」面板，它会自动完成安装；装好后用 slides_create_deck 建 deck。')
         return lines.join('\n')
       }
 
@@ -190,14 +191,14 @@ export function registerTools(ctx, deps) {
       return [
         `已创建 deck "${id}"（标题：${deck?.title ?? title}，${deck?.pages ?? 1} 页）。`,
         `文件：${deckFile(workspace, id)}`,
-        '下一步：先加载 slides-authoring skill，再用 slides_write_deck 一次性写入完整 index.tsx；写完用 slides_present 预览。',
+        '下一步：先加载 slide-authoring skill，再用 slides_write_deck 一次性写入完整 index.tsx；写完用 slides_present 预览。',
       ].join('\n')
     },
   })
 
   tools.register({
     name: 'slides_write_deck',
-    description: `用完整源码覆盖写入 slides/<id>/index.tsx（一次写整份文件，不要分多次小改），返回页数、讲稿条数和校验告警；写页面前先看 slides-authoring skill。${HINT}`,
+    description: `用完整源码覆盖写入 slides/<id>/index.tsx（一次写整份文件，不要分多次小改），返回页数、讲稿条数和校验告警；写页面前先看 slide-authoring skill。${HINT}`,
     parameters: {
       type: 'object',
       properties: {
@@ -373,6 +374,120 @@ export function registerTools(ctx, deps) {
       return lines.join('\n')
     },
   })
+
+  tools.register({
+    name: 'slides_context',
+    description: '读取用户此刻在演示文稿工作台里看的内容：deck id、标题、第几页、选中的元素（open-slide 的 current.json）以及工作区路径。用户说「这一页」「选中的这个」「当前 deck」时先调用它。',
+    parameters: EMPTY_PARAMETERS,
+    output: TEXT_OUTPUT,
+    execute: async () => {
+      const live = await readLiveContext(workspace.root)
+      const lines = [`工作区：${workspace.root}`]
+      if (!live?.slideId) {
+        lines.push('用户当前没有打开任何 deck（在首页或 deck 列表）。')
+      } else {
+        lines.push(`当前 deck：${live.slideId}${live.slideTitle ? `（${live.slideTitle}）` : ''}`)
+        if (live.pageNumber) lines.push(`当前页：第 ${live.pageNumber}/${live.totalPages ?? '?'} 页`)
+        if (live.selection?.text) lines.push(`选中元素：<${live.selection.tagName ?? 'element'}> 第 ${live.selection.line ?? '?'} 行「${String(live.selection.text).slice(0, 200)}」`)
+        lines.push(`源码：${deckFile(workspace, live.slideId)}`)
+      }
+      if (live?.raw) lines.push('', 'current.json 原文：', live.raw.trim())
+      return lines.join('\n')
+    },
+  })
+
+  const themesDir = () => workspace.themesDir ?? join(workspace.root, 'themes')
+
+  tools.register({
+    name: 'slides_themes',
+    description: '列出工作区 themes/ 下的主题（id、名称、简介、有没有 demo）；传 id 时返回该主题的 themes/<id>.md 全文和 <id>.demo.tsx 源码。create-slide 选主题、create-theme 查重名时用。',
+    parameters: {
+      type: 'object',
+      properties: { id: { type: 'string', description: '主题 id；不传则列出全部' } },
+      required: [],
+      additionalProperties: false,
+    },
+    output: TEXT_OUTPUT,
+    execute: async (args) => {
+      const id = ensureArgs(args).id
+      const dir = themesDir()
+      if (id) {
+        if (!THEME_ID.test(String(id))) throw new Error(`主题 id 不合法：${id}`)
+        const md = await readFile(join(dir, `${id}.md`), 'utf8').catch(() => null)
+        if (md == null) throw new Error(`没有这个主题：themes/${id}.md`)
+        const demo = await readFile(join(dir, `${id}.demo.tsx`), 'utf8').catch(() => null)
+        return [`themes/${id}.md：`, md.trim(), '', demo == null ? `（没有 themes/${id}.demo.tsx）` : `themes/${id}.demo.tsx：\n${demo.trim()}`].join('\n')
+      }
+      const names = await readdir(dir).catch(() => [])
+      const ids = names.filter(name => name.endsWith('.md') && name !== 'README.md').map(name => name.slice(0, -3)).sort()
+      if (!ids.length) return 'themes/ 下还没有主题。'
+      const rows = await Promise.all(ids.map(async (themeId) => {
+        const md = await readFile(join(dir, `${themeId}.md`), 'utf8').catch(() => '')
+        const field = key => (md.match(new RegExp(`^${key}:\\s*(.+)$`, 'm'))?.[1] ?? '').trim()
+        return `- ${themeId}：${field('name') || themeId}${field('description') ? ` —— ${field('description')}` : ''}${names.includes(`${themeId}.demo.tsx`) ? '' : '（无 demo）'}`
+      }))
+      return [`共 ${ids.length} 个主题：`, ...rows].join('\n')
+    },
+  })
+
+  tools.register({
+    name: 'slides_write_theme',
+    description: '写一个主题：整份覆盖 themes/<id>.md（带 name / description / mode 的 frontmatter）和 themes/<id>.demo.tsx（export default 2–3 页的演示）。两个文件一起写，编辑器的 Themes 面板会热更新。按 create-theme 技能写；不要用它改 deck。',
+    parameters: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'kebab-case 主题 id' },
+        markdown: { type: 'string', description: 'themes/<id>.md 全文' },
+        demo: { type: 'string', description: 'themes/<id>.demo.tsx 全文' },
+      },
+      required: ['id', 'markdown', 'demo'],
+      additionalProperties: false,
+    },
+    output: TEXT_OUTPUT,
+    execute: async (args) => {
+      const { id, markdown, demo } = ensureArgs(args)
+      if (!THEME_ID.test(String(id ?? ''))) throw new Error(`主题 id 要用 kebab-case：${id}`)
+      const md = String(markdown ?? '')
+      const front = md.match(/^---\n([\s\S]*?)\n---/)
+      if (!front || !/^name:\s*\S/m.test(front[1])) throw new Error('markdown 开头要有 frontmatter，且包含 name（另有 description、mode）')
+      if (!/export\s+default\b/.test(String(demo ?? ''))) throw new Error('demo 要 export default 一组页面')
+      const dir = themesDir()
+      await mkdir(dir, { recursive: true })
+      for (const [name, body] of [[`${id}.md`, md], [`${id}.demo.tsx`, String(demo)]]) {
+        const file = join(dir, name)
+        await writeFile(`${file}.tmp`, body, 'utf8')
+        await rename(`${file}.tmp`, file)
+      }
+      return `已写入 themes/${id}.md 和 themes/${id}.demo.tsx；在编辑器的 Themes 面板里可以看到预览。`
+    },
+  })
+}
+
+/** 主题 id：和 open-slide 的 themes 插件一致，kebab-case。 */
+const THEME_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+/**
+ * 读 open-slide 自己的 current.json：用户正在看哪个 deck、哪一页、选中了什么。
+ * @param {string} root - 工作区根目录。
+ * @returns {Promise<object|null>} 读不到就 null。
+ */
+export async function readLiveContext(root) {
+  try {
+    const raw = await readFile(join(root, 'node_modules', '.open-slide', 'current.json'), 'utf8')
+    const data = JSON.parse(raw)
+    return {
+      raw,
+      slideId: data.slideId ?? null,
+      slideTitle: data.slideTitle ?? undefined,
+      pageNumber: data.pageNumber ?? undefined,
+      totalPages: data.totalPages ?? undefined,
+      view: data.view ?? undefined,
+      selection: data.selection ?? null,
+      updatedAt: data.updatedAt ?? null,
+    }
+  } catch {
+    return null
+  }
 }
 
 /** 把异常转成可读的一句话。 */

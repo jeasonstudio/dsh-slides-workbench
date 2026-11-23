@@ -69,24 +69,8 @@ const http = {
   setup: () => request('setup', {}),
   server: (action) => request('server', { action }),
   createDeck: (title) => request('deck/create', { title }),
-}
-
-/** 直接和 agent 桥说话的几条路径（/__agent 由插件接管，同源）。 */
-const agent = {
-  createSession: (slideId) => call('/__agent/sessions', { provider: 'claude', slideId }),
-  send: (id, text) => call(`/__agent/sessions/${encodeURIComponent(id)}/messages`, { text }),
-}
-
-async function call(path, body) {
-  const res = await fetch(path, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
-    credentials: 'same-origin',
-  })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`)
-  return data
+  syncThemes: () => request('themes/sync', {}),
+  reveal: () => request('reveal', {}),
 }
 
 // ---- 轮询 ----
@@ -173,17 +157,6 @@ export async function startServer() {
   }
 }
 
-export async function stopServer() {
-  set({ busy: 'server' })
-  try {
-    set({ state: await http.server('stop') })
-  } catch (err) {
-    toast(err.message, { error: true })
-  } finally {
-    set({ busy: null })
-  }
-}
-
 // ---- iframe 地址 ----
 
 /** dev server 只监听 localhost（IPv6 ::1），127.0.0.1 连不上。 */
@@ -206,47 +179,32 @@ export function appUrl(state = snapshot.state, route = '') {
   return `${APP_PREFIX}/${path}?v=${at}`
 }
 
-/**
- * 首页卡片用的单页预览地址（open-slide 的干净预览路由，会把画布等比缩到 iframe 大小）。
- * @param {object} state - /state 快照。
- * @param {string} id - deck id。
- * @param {number} [page] - 第几页，从 1 开始。
- * @returns {string} iframe 地址。
- */
-export function thumbUrl(id, version = '') {
-  return `${BASE}thumb?id=${encodeURIComponent(id)}&v=${encodeURIComponent(String(version))}`
-}
-
-export function deckThumbUrl(state = snapshot.state, id, page = 1) {
-  const at = Number(state?.server?.startedAt) || 0
-  return `${APP_PREFIX}/s/${encodeURIComponent(id)}/preview?p=${Math.max(1, page)}&v=${at}`
-}
-
 /** 新建一个 deck，返回 deck 行。 */
 export async function createDeck(title) {
   const data = await http.createDeck(title)
   return data?.deck ?? null
 }
 
-/** 把一句话需求发进新建的 deck 对话（失败不阻塞：先让人看到页面）。 */
-export async function startAgent(deckId, text) {
-  try {
-    const session = await agent.createSession(deckId)
-    await agent.send(session.id, text)
-    return session
-  } catch {
-    return null
-  }
+/** 把插件内置的官方模板合并进工作区 themes/（打开模板页时顺手做一次；失败静默）。 */
+export function syncThemes() {
+  return http.syncThemes().catch(() => null)
+}
+
+/** 在系统文件管理器里打开工作区目录（Host 那台机器上）。 */
+export function revealWorkspace() {
+  http.reveal().catch((err) => toast(err.message, { error: true }))
 }
 
 /**
- * 在浏览器里单独打开时用的地址（真正的 dev server 地址，不经反代）。
+ * 在浏览器里单独打开当前页面：用真正的 dev server 地址（不经 DSH 反代）。
  * @param {object} state - /state 快照。
- * @returns {string|null} 外链地址。
+ * @param {string} route - open-slide 内部路由。
  */
-export function externalUrl(state = snapshot.state) {
+export function openExternal(state = snapshot.state, route = '') {
   const base = serverBase(state)
-  return base ? `${base}${APP_PREFIX}/` : null
+  if (!base) return
+  const path = String(route || '').replace(/^\/+/, '').replace(/\/+$/, '')
+  window.open(`${base}${APP_PREFIX}/${path}`, '_blank', 'noopener,noreferrer')
 }
 
 // ---- toast ----

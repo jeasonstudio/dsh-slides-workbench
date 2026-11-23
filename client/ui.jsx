@@ -1,6 +1,6 @@
 // 通用小组件：图标、按钮、对话框、日志、toast。样式全在 styles.css 的 .sw- 前缀下。
 import React from 'react'
-import { t, toggleLang } from './i18n.js'
+import { t } from './i18n.js'
 
 const PATHS = {
   plus: 'M12 5v14M5 12h14',
@@ -23,6 +23,12 @@ const PATHS = {
   arrowUp: 'M12 19V5M6 11l6-6 6 6',
   arrowRight: 'M5 12h14M13 6l6 6-6 6',
   home: 'M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z',
+  minus: 'M5 12h14',
+  target: 'M12 3v3M12 18v3M3 12h3M18 12h3M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',
+  dice: 'M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM8.5 8.5h.01M15.5 8.5h.01M12 12h.01M8.5 15.5h.01M15.5 15.5h.01',
+  palette: 'M12 3a9 9 0 1 0 0 18c1 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1-.3-.3-.4-.6-.4-1 0-.8.7-1.4 1.5-1.4H16a5 5 0 0 0 5-5c0-4.4-4-8-9-8zM7.5 11.5h.01M10 7.5h.01M14.5 7.5h.01M17 11h.01',
+  chat: 'M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H10l-4 3.5V16H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01',
+  folder: 'M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.5h8.5A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z',
 }
 
 export function Icon({ name, size = 16, stroke = 1.6 }) {
@@ -94,15 +100,6 @@ export function Spinner({ size = 16 }) {
 
 export function StatusDot({ status, label }) {
   return <span className={`sw-dot is-${status || 'stopped'}`} role="img" aria-label={label} title={label} />
-}
-
-/** 右上角的语言切换；floating 时绝对定位到面板右上角。 */
-export function LangSwitch({ floating = false }) {
-  return (
-    <button type="button" className={`sw-lang ${floating ? 'is-floating' : ''}`} onClick={toggleLang} aria-label={t('lang.switch')} title={t('lang.switch')}>
-      {t('lang.toggle')}
-    </button>
-  )
 }
 
 export function Dialog({ title, onClose, children, footer, width = 420 }) {

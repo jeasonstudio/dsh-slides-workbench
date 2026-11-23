@@ -4,7 +4,7 @@
 
 ![在 DSH 面板里打开的 open-slide 编辑器](docs/assets/workbench-editor.jpg)
 
-<sub>面板里就是 open-slide 本尊：左侧页面缩略图、中间 1920×1080 画布、右侧 Format / Agent 面板、右上角 Present / Design / Export。</sub>
+<sub>面板里就是 open-slide 本尊：左侧页面缩略图、中间 1920×1080 画布、右侧 Format 面板、右上角 Present / Design / Export。</sub>
 
 <br>
 
@@ -22,9 +22,16 @@
    `open-slide:locale`（`zh-CN` / `en`）并让它重载一次。所以不需要在两边各调一遍。
 3. **把「做 deck」这件事交给 agent** —— 注册 8 个 `slides_*` 工具和 2 个 skill，模型在会话里就能建 deck、写页面、写讲稿、构建导出。
 
-打开面板先是工作台**首页**：中间一个输入框，说一句「帮我做一个关于 X 的演示」，它会新建 deck、
-开好 DSH 对话并直接进编辑器；周围一圈是最近的 deck 预览卡片（固定轨道，不做无限拖拽），
-点一张就进去。右下角「浏览全部幻灯片」进 open-slide 自己的列表页。
+打开面板先是工作台**首页（灵感墙）**：中间一句话 + 输入框，说一句「帮我做一个关于 X 的演示」，
+它会新建 deck、打开编辑器（Agent 面板开着），并把需求发进 Agent 面板里的 DSH 对话。
+
+- **卡片填充需求**：周围散落着打包在插件里的灵感卡（和本地 deck 无关）。点封面卡或想法卡，内容「打」进输入框；
+  心法卡和配色卡作为风格要求叠加在需求后面（输入框下方的小标签），按退格键移除最后一个。
+- **画布**：可拖动平移、滚轮滚动、⌘/Ctrl + 滚轮缩放；右下角缩小 / 回到中心 / 放大。窄面板时退回两列文档流。
+- **底部 dock**：按类型筛选卡片、「手气不错」随机挑一张、「模板」进 open-slide 的主题页、「我的演示」进 deck 列表。
+- **模板**：模板详情页右上角多一个「用这个模板」，点了回首页、把这个主题挂成叠加项。
+  插件内置 11 套汉化的官方模板（`themes/`），启动时和打开模板页时合并进工作区的 `themes/`：
+  改过或删掉的官方模板、与官方同名的本地模板都不会被覆盖，此后也不再同步（记录在 `themes/.official.json`）。
 
 ![open-slide 的 deck 浏览页](docs/assets/workbench-decks.jpg)
 
@@ -52,35 +59,31 @@ plugin_manager install_bundle  →  target: <本仓库的绝对路径>
 
 **在面板里**：和用 open-slide 网页版一模一样。
 
-- 首页是 deck 卡片；点进去是编辑器，点元素能改样式，右侧 Format / Design 面板直接改源文件。
+- 「我的演示」里是 deck 卡片；点进去是编辑器，点元素能改样式，右侧 Format / Design 面板直接改源文件。
 - 右上角 `Present` 进全屏演示（方向键 / 空格翻页，`p` 开 presenter view，讲稿在旁边）。
 - 右上角导出菜单出 HTML / PDF / PPTX；`dist/` 静态站可以直接部署。
-- 面板右下角有两个小按钮：重新加载页面、在浏览器里单独打开（同一台机器时很顺手）。
+- 面板右边缘竖排几个小按钮：回到首页、重新加载页面、在访达中显示工作区、在浏览器里单独打开当前页（同一台机器时很顺手）。
 
-**编辑器里的 Agent 面板**：已经只接 DSH。
+**编辑器里的 Agent 面板：外壳是 open-slide 的，内容是 DSH 原生对话。**
 
-open-slide 自带的 agent provider 只有 Claude Code / Codex（硬编码走各自 CLI）。插件把
-`/__agent/*` 整段接管，改成 DSH 后端：
+工具栏的 **Agent** 按钮、快捷键 `A`、「…」菜单里的入口、右侧停靠栏的开合与拖宽，都是 open-slide 自己的；
+面板里面换成了 DSH 的原生对话流和输入框（流式输出、工具调用、提问选项、审批、插话、模型选择、上下文用量都是 DSH 的），
+插件不自己画对话，也不再接管 open-slide 的 `/__agent` 接口（它自带的 agent 后端在 `open-slide.config.ts` 里关掉了）。
 
-- 面板里显示的唯一 provider 是 **DeepSeek Harness**，模型下拉是「当前会话的模型」；
-- 新建一个 open-slide 对话 = 在 DSH 里新建一个会话（cwd 是工作区），所以它同时出现在侧栏，
-  可以点开继续聊、也能被搜索到；
-- 面板里的提问会写进那个 DSH 会话，并自动带上工作台上下文（当前 deck、第几页、选中的元素、
-  待处理批注），模型用 `slides_*` 工具改页面；
-- 面板里的「停止」= 打断那一轮；每一轮的 user / 助手 / 工具调用 / 结果都会翻译成 open-slide
-  的 item 显示出来（工具调用和回复文字都是**边做边显示**，走 DSH 的 token 流）；
-- 右上角的模型下拉就是 DSH 当前可路由的真实模型，选了就落到这个会话上（`selectModel`）；
-- 模型问你问题时，面板里出现的是**可点的选项**（`user-questions/request` 被接管），点完答案
-  直接回填给工具，不用切回 DSH；
-- 你在面板里再发一句时不会报「忙」，而是用 `agent.steer()` 插到当前这轮的下一步；
-- 每次发消息都会读一遍 open-slide 的 `current.json`，所以"这一页 / 选中了什么"始终是最新的；
-- provider 的图标（open-slide 写死的 Claude / OpenAI 品牌 SVG）已经换成工作台自己的图标。
+- 每个 deck 一段 DSH 会话，标题是 deck 标题，归在 DSH 的 `slides-workbench` Workspace 下（cwd 就是工作区），
+  所以在 DSH 侧栏里同样能看到、继续、搜索；
+- 面板标题栏：「+」给这个 deck 开一段新对话，「×」关掉面板（和点 Agent 按钮一样）；
+- 打开面板就是这个 deck 的对话（之前聊过就接着显示；没聊过也不显示 DSH 的欢迎页，直接是消息区 + 贴底的输入框）；
+- 外观跟 open-slide 的面板走：配色（面板底色、用户消息、输入框、发送按钮）、字体与字号（12.5px · 1.5）、圆角（8px / 5px）、
+  边距（消息区 16px、输入框 12px）都用 open-slide 的规范，明暗切换时实时跟随；面板默认宽度和 Format / Design 一样（320px），拖过之后记住；
+- 首页提交需求 = 新建 deck、进编辑器时 Agent 面板开着，需求作为第一条消息发进这个 deck 的对话；
+- 「这一页 / 选中的这个」由模型调 `slides_context` 读 open-slide 的 `current.json`。
 
 **在会话里**：直接说
 
 > 帮我做一个关于灰度发布的演示，8 页，深色、克制，带讲稿。
 
-模型会先读 `slides-authoring` skill（open-slide 的 1920×1080 画布、页面契约、动效原语、反模式），
+模型会先读 `slide-authoring` skill（open-slide 的 1920×1080 画布、页面契约、动效原语、反模式），
 再调工具落盘，面板里的 open-slide 会自动热更新。
 
 | 工具 | 用途 |
@@ -93,8 +96,12 @@ open-slide 自带的 agent provider 只有 Claude Code / Codex（硬编码走各
 | `slides_delete_deck` | 删除（移到工作区 `.trash/`） |
 | `slides_present` | 确保 dev server 在跑，给预览 / 编辑器地址 |
 | `slides_build` | 构建静态站到 `dist/` |
+| `slides_context` | 用户此刻在看哪个 deck、第几页、选中了什么（附 `current.json` 原文） |
+| `slides_themes` | 列出 / 读取 `themes/` 下的主题 |
+| `slides_write_theme` | 写 `themes/<id>.md` + `themes/<id>.demo.tsx` |
 
-两个 skill：`slides-authoring`（页面写作技术参考）、`slides-create-deck`（从零做一份 deck 的工作流）。
+5 个 skill 是 open-slide 官方技能（`skills/`，与上游的差异见 `skills/README.md`）：`slide-authoring`（页面写作技术参考）、
+`create-slide`（从零做 deck）、`create-theme`（做主题）、`apply-comments`（处理编辑器里的批注）、`current-slide`（「这一页」指的是哪）。
 
 <br>
 
@@ -128,16 +135,16 @@ open-slide 自带的 agent provider 只有 Claude Code / Codex（硬编码走各
 
 ## 常见问题
 
-**面板一直显示「正在准备工作台」？** 看下面的安装日志。多半是 npm 源不通；修好网络后点一下「继续准备」。
-日志会显示到底卡在哪一行。
+**面板一直显示「首次使用，正在安装 open-slide…」？** 依赖按 `template/package-lock.public.json` 用 `npm ci` 安装，
+依次尝试 npmmirror、npmjs，装完会实际加载一遍原生绑定。失败时画面上有「重试」和可展开的安装日志，日志会显示到底卡在哪一行。
 
-**显示「正在启动演示服务」或者报错？** 点「重新启动」。dev server 只监听 `localhost`；
+**「预览没能启动」？** 点「重试」。dev server 只监听 `localhost`；
 如果端口被别的 Vite 占了，插件会自动往后找一个空闲端口，日志里能看到实际端口。
 
 **页面白屏 / 有一行红字？** 那是 `index.tsx` 真的错了 —— open-slide 把错误画在画布上。把错误贴给 AI 让它改。
 
-**Agent 面板报错「当前 profile 缺少会话服务」？** 说明这个 profile 没装 DSH 的会话服务（极少见），
-面板会明确报出来而不是假装能用；此时仍然可以在 DSH 输入框里让 AI 改 deck。
+**Agent 面板显示「当前 DSH 没有会话服务」？** 说明这个 profile 没装 DSH 的会话界面（极少见）；
+工作台其它功能照常，可以在 DSH 自己的会话里让 AI 改 deck。
 
 **能脱离 DSH 用吗？** 能。工作区就是标准 open-slide workspace，只是为了让面板嵌入，
 `open-slide.config.ts` 里的 `base` 指向 `/slides-workbench/app/`：

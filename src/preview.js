@@ -1,8 +1,7 @@
 // open-slide dev server 守护：按需启动、找空闲端口、保留日志尾部、退出时收尸。
 import { spawn } from 'node:child_process'
 import { createConnection } from 'node:net'
-import { exists } from './env.js'
-import { pipeLines } from './env.js'
+import { exists, nodeRuntime, pipeLines } from './env.js'
 
 const LOG_LIMIT = 240
 const START_TIMEOUT_MS = 90_000
@@ -135,9 +134,10 @@ export class DevServer {
     }
     this.url = `http://localhost:${this.port}`
     this.note(`启动 open-slide dev（端口 ${this.port}）…`)
-    const child = spawn(process.execPath, [this.workspace.binPath, 'dev', '--port', String(this.port), '--no-skills-check'], {
+    const runtime = nodeRuntime()
+    const child = spawn(runtime.command, [this.workspace.binPath, 'dev', '--port', String(this.port), '--no-skills-check'], {
       cwd: this.workspace.root,
-      env: { ...process.env, NO_COLOR: '1', FORCE_COLOR: '0', BROWSER: 'none' },
+      env: { ...process.env, ...runtime.env, NO_COLOR: '1', FORCE_COLOR: '0', BROWSER: 'none' },
       stdio: ['ignore', 'pipe', 'pipe'],
     })
     this.child = child

@@ -106,3 +106,12 @@ export function exists(path) {
     return false
   }
 }
+
+/**
+ * 用来跑 open-slide CLI 的 Node：Host 进程的 process.execPath。桌面客户端里它可能是 Electron，
+ * 带上 ELECTRON_RUN_AS_NODE 就是一个完整的 Node，用户机器上不必另装 Node 也能起 dev server。
+ * @returns {{command: string, env: Record<string, string>}} 命令与额外环境变量。
+ */
+export function nodeRuntime() {
+  return { command: process.execPath, env: process.versions.electron ? { ELECTRON_RUN_AS_NODE: '1' } : {} }
+}

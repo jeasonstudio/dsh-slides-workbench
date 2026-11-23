@@ -1,13 +1,13 @@
 // dsh-slides-workbench host 半片：/slides-workbench/* 接口、open-slide 工作区守护、agent 工具。
+import { spawn } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { AgentBridge } from './agent-bridge.js'
 import { Decks } from './decks.js'
 import { packageRoot, resolveWorkspaceRoot } from './env.js'
 import { APP_PREFIX, createHttpProxy, createUpgradeProxy, DEFAULT_ROOT_ROUTES, discoverRootRoutes } from './proxy.js'
 import { DevServer } from './preview.js'
 import { registerPrompt, registerSkills } from './skills.js'
-import { Thumbs } from './thumbs.js'
+import { OfficialThemes } from './themes.js'
 import { registerTools } from './tools.js'
 import { Workspace } from './workspace.js'
 
@@ -52,6 +52,23 @@ export function requestRejection(ctx, req) {
   return connection.requestRejection({ headers: req.headers })
 }
 
+/**
+ * 在系统文件管理器里打开一个目录（Host 那台机器上）。
+ * @param {string} path - 目录。
+ * @returns {Promise<void>} 打开命令起来了就算成功。
+ */
+export function revealPath(path) {
+  const command = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'explorer' : 'xdg-open'
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, [path], { detached: true, stdio: 'ignore' })
+    child.once('error', reject)
+    child.once('spawn', () => {
+      child.unref()
+      resolve()
+    })
+  })
+}
+
 function pluginVersion() {
   try {
     return JSON.parse(readFileSync(join(packageRoot(), 'package.json'), 'utf8')).version ?? null
@@ -70,12 +87,8 @@ export default {
     const version = pluginVersion()
     const proxyHttp = createHttpProxy(dev)
     const proxyUpgrade = createUpgradeProxy(dev)
-    // open-slide 编辑器的 Agent 面板：只接 DSH（不转发给它自己的 claude/codex provider）
-    const bridge = new AgentBridge({ ctx, root: workspace.root })
-    // deck 缩略图：headless Chrome 截一张缓存起来，首页直接用 <img>
-    const thumbs = new Thumbs({ workspace, dev, decks })
-    // token 级流式：把 DSH 的 assistant-stream 直接推给面板
-    ctx.effect(() => bridge.attach(), 'dsh-slides-workbench: agent stream')
+    // 官方模板：插件包里的 themes/ 合并进工作区（本地改过的不覆盖）
+    const officialThemes = new OfficialThemes({ themesDir: workspace.themesDir, bundledDir: join(packageRoot(), 'themes'), version })
 
     let lastStartAttempt = 0
     // 用户手动停过就别自动拉起，直到他再点启动
@@ -114,21 +127,22 @@ export default {
     async function bootstrap() {
       const first = await workspace.status()
       if (first.scaffolded) await workspace.ensureConfig().catch(() => {})
-      if (first.scaffolded && first.installed) return
       if (!first.scaffolded) await workspace.scaffold().catch(() => {})
+      // 官方模板在后台合并进 themes/，不挡启动
+      officialThemes.sync().catch(() => {})
+      if (first.scaffolded && first.installed) return
       const after = await workspace.status()
       if (!after.installed && after.install.status !== 'running') await workspace.installDeps().catch(() => {})
     }
 
     async function state() {
       const [workspaceStatus, deckRows] = await Promise.all([workspace.status(), listDecks()])
-      // 顺手把缩略图排进后台队列，下次打开首页就有图
-      thumbs.warm(deckRows)
       return {
         version,
         workspace: workspaceStatus,
         server: dev.snapshot(),
         decks: deckRows,
+        officialThemes: officialThemes.status,
       }
     }
 
@@ -161,11 +175,6 @@ export default {
       const url = new URL(req.url || '/', 'http://local')
       const rest = url.pathname.slice(PREFIX.length).replace(/^\/+/, '').replace(/\/+$/, '')
       const method = req.method || 'GET'
-
-      if (rest === 'thumb' && (method === 'GET' || method === 'HEAD')) {
-        await thumbs.handle(req, res)
-        return
-      }
 
       // open-slide 自己的页面（含它的静态资源和 HMR）：原样转发给 dev server
       if (rest === 'app' || rest.startsWith('app/')) {
@@ -229,6 +238,11 @@ export default {
           rescanSlides()
           return json(res, 200, result)
         }
+        case 'themes/sync':
+          return json(res, 200, await officialThemes.sync())
+        case 'reveal':
+          await revealPath(workspace.root)
+          return json(res, 200, { ok: true })
         case 'build': {
           const result = await workspace.build()
           return json(res, result.ok ? 200 : 500, result)
@@ -284,15 +298,7 @@ export default {
               json(res, rejection, { error: '未授权' })
               return
             }
-            // /__agent 由 DSH 桥接管，其它 /__* 原样转发给 dev server
-            if (path === '/__agent') {
-              bridge.handle(req, res).then((handled) => {
-                if (!handled) proxyHttp(req, res)
-              }, (err) => {
-                json(res, err?.status ?? 500, { error: err?.message ?? '出错了' })
-              })
-              return
-            }
+            // 对话走 DSH 原生会话，open-slide 自带的 Agent 在配置里关掉了；/__* 一律原样转发给 dev server
             proxyHttp(req, res)
           },
         }), `dsh-slides-workbench: ${path} proxy`)
@@ -328,9 +334,8 @@ export default {
       } }), `dsh-slides-workbench: hmr ${path}`)
     }
 
-    // 插件卸载时把 dev server 和 agent SSE 收掉，不留孤儿
+    // 插件卸载时把 dev server 收掉，不留孤儿
     ctx.effect(() => () => {
-      bridge.dispose()
       dev.kill().catch(() => {})
     }, 'dsh-slides-workbench: dev server')
   },

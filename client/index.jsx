@@ -1,18 +1,19 @@
 // dsh-slides-workbench 浏览器半片：侧栏一个「演示文稿」入口，
-// 点开就是 open-slide 自己的页面（Slides / Themes / Assets 都在它自己的左侧导航里），
-// 插件不重画任何 deck UI。
+// 点开先是工作台首页（灵感墙），进去就是 open-slide 自己的页面（deck 列表 / 模板 / 编辑器），
+// 插件不重画任何 deck UI。open-slide 编辑器里 Agent 面板的内容换成 DSH 原生对话（见 chat.jsx）。
 //
 // 注：DSH 的 sidebar.panellist 是扁平列表（每行是宿主渲染的 button，只有 id/order/label），
 // 没有 children 或展开态，所以侧栏做不出「可展开的父级菜单」。
 import React from 'react'
 import { AppFrame } from './app.jsx'
+import { CHAT_SLOT, ChatConversation } from './chat.jsx'
 import { HomeView } from './home.jsx'
-import { getSnapshot, refresh, useSnapshot, watchState } from './api.js'
+import { dismissToast, getSnapshot, syncThemes, useSnapshot, watchState } from './api.js'
 import { setHostLang, subscribeLang, t, useLang } from './i18n.js'
-import { ServerView, SetupView } from './setup.jsx'
+import { bindServices } from './session.js'
+import { PreparingView } from './setup.jsx'
 import css from './styles.css'
-import { Button, LangSwitch, Spinner, ToastHost } from './ui.jsx'
-import { dismissToast } from './api.js'
+import { ToastHost } from './ui.jsx'
 
 /** 唯一入口：侧栏行 id 同时是 main 面板 key。 */
 const PANEL_ID = 'slides-workbench'
@@ -26,50 +27,36 @@ function SlidesIcon({ size = 18 }) {
   )
 }
 
-function BootState() {
-  return (
-    <div className="sw-boot">
-      <LangSwitch floating />
-      <Spinner size={20} />
-      <p>{t('boot.loading')}</p>
-    </div>
-  )
-}
-
-function FailState({ error }) {
-  return (
-    <div className="sw-fail">
-      <LangSwitch floating />
-      <h2>{t('error.title')}</h2>
-      <p className="sw-lead">{t('error.lead')}</p>
-      {error ? <p className="sw-hint">{error}</p> : null}
-      <div className="sw-actions">
-        <Button variant="primary" icon="refresh" onClick={() => refresh()}>{t('common.retry')}</Button>
-      </div>
-    </div>
-  )
-}
-
-/** 面板：三种过渡态之后，把 open-slide 的页面铺满。 */
-function Panel() {
+/**
+ * 面板：准备态 → 首页（灵感墙）→ 铺满的 open-slide 页面。
+ * renderSlot / SessionProvider 由 DSH 的 slot 渲染器传进来（注册时声明了会话作用域的子 slot），
+ * 交给编辑器外框，在 open-slide 的 Agent 面板里渲染 DSH 原生对话。
+ */
+function Panel({ renderSlot, SessionProvider }) {
   // 切语言时整棵树重新渲染
   useLang()
   const snap = useSnapshot()
   const state = snap.state
-  // 首页（工作台画布）↔ open-slide 页面；deckId 非空时直接打开那个 deck
-  const [view, setView] = React.useState({ mode: 'home', deckId: null })
+  // 首页（灵感墙）↔ open-slide 页面（route：'' 是 deck 列表，themes 是模板，s/<id> 是编辑器）；
+  // mods：回首页时预先挂上的叠加项（从模板详情点「用这个模板」带回来的）
+  const [view, setView] = React.useState({ mode: 'home', route: '', mods: null })
 
   React.useEffect(() => watchState(), [])
 
-  const openDeck = (deckId) => setView({ mode: 'app', deckId })
-  const goHome = () => setView({ mode: 'home', deckId: null })
+  const openRoute = route => setView({ mode: 'app', route, mods: null })
+  // 打开模板页时顺手把内置官方模板合并一次；写进 themes/ 后 open-slide 自己热更新
+  const openThemes = () => {
+    syncThemes()
+    openRoute('themes')
+  }
+  const goHome = (mods = null) => setView({ mode: 'home', route: '', mods })
+  const pickTheme = ({ id, name }) => goHome([{ id: `theme:${id}`, kind: 'theme', label: name || id, text: t('home.themeMod', { id, name: name || id }) }])
 
+  const ready = state?.workspace?.installed && state?.server?.status === 'running'
   let body
-  if (!state) body = snap.loading ? <BootState /> : <FailState error={snap.error} />
-  else if (!state.workspace?.scaffolded || !state.workspace?.installed) body = <SetupView />
-  else if (state.server?.status !== 'running') body = <ServerView />
-  else if (view.mode === 'app') body = <AppFrame state={state} route={view.deckId ? `s/${view.deckId}` : ''} onHome={goHome} />
-  else body = <HomeView state={state} onOpen={openDeck} onBrowse={() => setView({ mode: 'app', deckId: null })} />
+  if (!ready) body = <PreparingView />
+  else if (view.mode === 'app') body = <AppFrame state={state} route={view.route} onHome={() => goHome()} onUseTheme={pickTheme} renderSlot={renderSlot} SessionProvider={SessionProvider} />
+  else body = <HomeView state={state} initialMods={view.mods} onOpen={deckId => openRoute(`s/${deckId}`)} onBrowse={() => openRoute('')} onThemes={openThemes} />
 
   return (
     <div className="sw-root">
@@ -106,10 +93,31 @@ function followHostLocale(ctx) {
   }
 }
 
+/**
+ * Agent 面板里的对话用到的 DSH 会话服务（只在带会话界面的 profile 里有；没有就显示一句说明），
+ * 以及对话正文的 slot entry。
+ */
+function registerChat(ctx) {
+  if (typeof ctx.inject !== 'function') return
+  ctx.inject(['sessions', 'workspaces'], (scope) => {
+    scope.effect(() => {
+      bindServices({ sessions: scope.sessions, workspaces: scope.workspaces })
+      return () => bindServices({ sessions: null, workspaces: null })
+    }, 'dsh-slides-workbench: session services')
+  })
+  ctx.effect(() => ctx.slots.inject(CHAT_SLOT, () => ctx.slots.register({ name: CHAT_SLOT }, ChatConversation)), 'dsh-slides-workbench: chat conversation')
+}
+
 export function apply(ctx) {
   followHostLocale(ctx)
 
-  ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: PANEL_ID }, Panel))
+  // 面板声明一个会话作用域的子 slot：Agent 面板里用 SessionProvider 套着渲染它
+  ctx.slots.inject('main', () => ctx.slots.register({
+    name: 'main',
+    key: PANEL_ID,
+    children: { [CHAT_SLOT]: { kind: 'single', scope: 'session' } },
+  }, Panel))
+  registerChat(ctx)
 
   // 侧栏入口；label 是 thunk，但换语言时仍然重注册一份
   ctx.effect(() => {

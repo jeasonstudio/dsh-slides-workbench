@@ -88,6 +88,8 @@ async function installedWorkspace() {
   await writeFile(join(core, 'package.json'), '{"name":"@open-slide/core","version":"9.9.9"}', 'utf8')
   // 假 CLI：被拉起来时立刻退出，测试里不会真的起 dev server
   await writeFile(join(core, 'bin.js'), 'process.exit(0)\n', 'utf8')
+  // 装好并验证过的标记（工作区依赖和模板不同，不看 lockfile 摘要）
+  await writeFile(join(root, 'node_modules', '.slides-workbench-install.json'), '{"lock":null}', 'utf8')
   return root
 }
 

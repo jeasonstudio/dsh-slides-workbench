@@ -47,57 +47,13 @@ div[class*="md:rounded-[10px]"][class*="bg-background"] {
   border-radius: 0 !important;
   box-shadow: none !important;
 }
+
+/* Agent 面板：外壳（工具栏按钮、停靠栏、拖宽）照旧，原来的内容让位给盖在上面的 DSH 原生对话
+   （外层渲染，见 client/chat.jsx）；藏起来而不是删掉，免得 Tab 键焦点跑进看不见的旧输入框 */
+[data-agent-dock] > .sidebar-swap > * { visibility: hidden !important; }
 `
   doc.head?.appendChild(style)
   return true
-}
-
-/** 我们给 Agent provider 用的图标（和侧栏入口同一套视觉，用 currentColor 跟随主题）。 */
-const BRAND_PATHS = '<rect x="3" y="4.5" width="18" height="12.5" rx="2.2" /><path d="M8 21h8M12 17v4" /><path d="M7 9.5h6M7 12.5h4" />'
-
-/**
- * open-slide 的 provider 图标是按 provider id 写死的（claude / codex 两家品牌 SVG）。
- * 我们接的是 DSH，就把这两个 viewBox 的 SVG 就地换成自己的图标：
- * 只改这个 SVG 自己的属性/子节点，不动 React 的节点身份，避免它的 diff 出错。
- * @param {Document|null} doc - iframe 文档。
- * @returns {number} 换掉了几个。
- */
-export function replaceBrandLogo(doc) {
-  const targets = doc?.querySelectorAll?.('svg[viewBox="0 0 256 257"], svg[viewBox="100 100 411 411"]')
-  if (!targets || !targets.length) return 0
-  for (const svg of targets) {
-    svg.setAttribute('viewBox', '0 0 24 24')
-    svg.setAttribute('fill', 'none')
-    svg.setAttribute('stroke', 'currentColor')
-    svg.setAttribute('stroke-width', '1.7')
-    svg.setAttribute('stroke-linecap', 'round')
-    svg.setAttribute('stroke-linejoin', 'round')
-    svg.setAttribute('data-sw-brand', '')
-    svg.innerHTML = BRAND_PATHS
-  }
-  return targets.length
-}
-
-/**
- * 盯着 iframe：open-slide 重新渲染出品牌图标时再换一次。
- * @param {Document|null} doc - iframe 文档。
- * @returns {() => void} 停止监听。
- */
-export function watchBrandLogo(doc) {
-  replaceBrandLogo(doc)
-  const body = doc?.body
-  if (!body || typeof MutationObserver !== 'function') return () => {}
-  let scheduled = false
-  const observer = new MutationObserver(() => {
-    if (scheduled) return
-    scheduled = true
-    queueMicrotask(() => {
-      scheduled = false
-      replaceBrandLogo(doc)
-    })
-  })
-  observer.observe(body, { childList: true, subtree: true })
-  return () => observer.disconnect()
 }
 
 /** 当前是不是 DSH 桌面客户端（Electron 渲染进程）。 */
@@ -161,6 +117,68 @@ export function watchDragRegion(doc) {
     queueMicrotask(() => {
       scheduled = false
       markDragRegion(doc)
+    })
+  })
+  observer.observe(body, { childList: true, subtree: true })
+  return () => observer.disconnect()
+}
+
+/** 主题详情页的路由：<base>/themes/<id>。 */
+const THEME_PATH = /\/themes\/([^/]+)\/?$/
+
+/**
+ * 模板详情页（/themes/<id>）的返回按钮那一行（标题 header 的前一个兄弟）最右边加一个
+ * 「用这个模板」，点了交给外壳（回首页、把这个主题挂成叠加项）。别的页面上把它拿掉。
+ * @param {Document|null} doc - iframe 文档。
+ * @param {{label: string, onUse: (theme: {id: string, name: string}) => void}} options - 按钮文案与回调。
+ * @returns {boolean} 当前是否挂着按钮。
+ */
+export function mountUseThemeButton(doc, { label, onUse }) {
+  if (!doc?.body) return false
+  const match = THEME_PATH.exec(doc.location?.pathname ?? '')
+  const old = doc.getElementById('sw-use-theme')
+  if (!match) {
+    old?.remove()
+    return false
+  }
+  const id = decodeURIComponent(match[1])
+  const title = doc.querySelector('header > h2')
+  const row = title?.parentElement?.previousElementSibling
+  if (!row) return false
+  if (old && old.parentElement === row && old.dataset.theme === id && old.textContent === label) return true
+  old?.remove()
+  const btn = doc.createElement('button')
+  btn.id = 'sw-use-theme'
+  btn.type = 'button'
+  btn.dataset.theme = id
+  btn.textContent = label
+  btn.style.cssText = 'margin-left:auto;height:32px;padding:0 14px;border-radius:6px;border:0;cursor:pointer;'
+    + 'font-size:13px;font-weight:500;background:var(--primary);color:var(--primary-foreground);'
+  btn.addEventListener('click', () => {
+    const h2 = doc.querySelector('header > h2')
+    onUse({ id, name: (h2?.textContent ?? '').trim() || id })
+  })
+  row.appendChild(btn)
+  return true
+}
+
+/**
+ * 盯着 iframe：换页 / 重新渲染后补上（或拿掉）「用这个模板」。
+ * @param {Document|null} doc - iframe 文档。
+ * @param {{label: string, onUse: (theme: {id: string, name: string}) => void}} options - 按钮文案与回调。
+ * @returns {() => void} 停止监听。
+ */
+export function watchUseThemeButton(doc, options) {
+  mountUseThemeButton(doc, options)
+  const body = doc?.body
+  if (!body || typeof MutationObserver !== 'function') return () => {}
+  let scheduled = false
+  const observer = new MutationObserver(() => {
+    if (scheduled) return
+    scheduled = true
+    queueMicrotask(() => {
+      scheduled = false
+      mountUseThemeButton(doc, options)
     })
   })
   observer.observe(body, { childList: true, subtree: true })

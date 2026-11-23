@@ -40,36 +40,44 @@ export function springEasing(stiffness = 170, damping = 20, mass = 1) {
 
 export const SPRING_SOFT = springEasing(120, 16)
 
-/** 卡片尺寸：宽度按 id 微调，高度 = 16:9 图 + 66px 文字区。 */
-export function cardSize(deck) {
-  const h = hash(deck.id)
-  const width = 176 + (h % 5) * 20
-  return { w: width, h: Math.round(width * (9 / 16)) + 66 }
+/** 卡片尺寸（布局用的外框）：封面 = 16:9 图 + 文字区；其他按类型给固定高度。 */
+export function cardSize(item) {
+  const h = hash(item.id)
+  switch (item.kind) {
+    case 'cover': {
+      const width = 196 + (h % 4) * 20
+      return { w: width, h: Math.round((width - 12) * (9 / 16)) + 72 }
+    }
+    case 'quote':
+      return { w: 220 + (h % 3) * 16, h: 150 }
+    case 'palette':
+      return { w: 200, h: 156 }
+    default:
+      return { w: 236, h: 176 }
+  }
 }
 
 /**
- * 散落布局：和媒体工作台同一套螺旋 + 推开算法，中间不给卡片。
- * @param {Array<{id: string, updatedAt?: number}>} decks - 卡片列表。
- * @returns {Record<string, {x: number, y: number, r: number, d: number}>} 每张卡相对中心的偏移。
+ * 散落布局：和媒体工作台同一套螺旋 + 推开算法，中间留给首屏那句话。
+ * 卡片默认端正（不旋转）；t 是 hover 时轻轻歪向哪边（±1.6°）。
+ * @param {Array<{id: string, kind: string}>} items - 卡片，按给定顺序从中心往外排。
+ * @returns {Record<string, {x: number, y: number, t: number}>} 每张卡相对中心的偏移。
  */
-export function scatterLayout(decks) {
-  const ordered = [...decks].sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0) || String(a.id).localeCompare(String(b.id)))
+export function scatterLayout(items) {
   const rand = seeded(7919)
-  const nodes = ordered.map((deck, index) => {
+  const nodes = items.map((item, index) => {
     const angle = index * 2.39996 + rand() * 0.5
-    const radius = 210 + 112 * Math.sqrt(index + 1)
-    const size = cardSize(deck)
-    const jitter = (rand() - 0.5) * 7
+    const radius = 210 + 104 * Math.sqrt(index + 1)
+    const size = cardSize(item)
     return {
-      id: deck.id,
+      id: item.id,
       x: Math.cos(angle) * radius * 1.42,
       y: Math.sin(angle) * radius * 0.98,
       w: size.w,
       h: size.h,
-      r: jitter,
     }
   })
-  const gap = 20
+  const gap = 18
   for (let step = 0; step < 240; step += 1) {
     let moved = false
     for (let i = 0; i < nodes.length; i += 1) {
@@ -103,6 +111,6 @@ export function scatterLayout(decks) {
     if (!moved) break
   }
   return Object.fromEntries(
-    nodes.map((node) => [node.id, { x: Math.round(node.x), y: Math.round(node.y), r: node.r, d: (hash(node.id) % 13 - 6) / 100 }]),
+    nodes.map((node) => [node.id, { x: Math.round(node.x), y: Math.round(node.y), t: hash(node.id) % 2 ? 1.6 : -1.6 }]),
   )
 }
