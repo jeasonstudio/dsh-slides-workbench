@@ -1,7 +1,7 @@
 ---
 name: 黑白栅格
-description: 瑞士国际主义风格的单色 deck：纯黑画布上铺一张看得见的 120 px 栅格，十字对位标记、行列编号、刻度尺，超大数字压在栅格线上作构图，只留一处信号橙。
-mode: dark
+description: 瑞士国际主义风格的单色 deck：米白纸面上铺一张看得见的 120 px 墨线栅格，十字对位标记、行列编号、刻度尺，超大黑字和实心墨块压在栅格线上作构图，只留一处信号橙。
+mode: light
 ---
 
 # 黑白栅格
@@ -10,21 +10,22 @@ mode: dark
 
 ## 配色
 
-单色为主，一种米白承担全部信息，灰阶只分三级。信号橙是唯一的强调色，**每页只用一处**：封面版本号里的小数点、数据页里「新版本」那根条、结尾页的命令行光标。
+单色为主，米白纸面上一种墨黑承担全部信息，灰阶只分三级；墨黑同时用来铺实心块（版本号下的注释带、命令行），在纸面上撑出最强的黑白张力。信号橙是唯一的强调色，**每页只用一处**：封面版本号里的小数点、数据页里「新版本」那根条、结尾页的命令行光标。
 
 | 角色   | 色值      | 用途                                                   |
 | ------ | --------- | ------------------------------------------------------ |
-| bg     | `#000000` | 纯黑画布                                               |
-| text   | `#EDEDED` | 米白：标题、大数字、数值、页码当前页                   |
-| body   | `#A1A1A1` | 中灰：正文、副标题、表格里的键                         |
-| muted  | `#8A8A8A` | 元信息：眉标、页眉页脚、行列编号、刻度数字（最暗的字） |
-| grid   | `#161616` | 栅格细线（极淡，只做底纹）                             |
-| frame  | `#2A2A2A` | 内容区外框线、表格行分隔线                             |
-| mark   | `#4D4D4D` | 栅格交点上的十字对位标记                               |
-| accent | `#FF4F00` | 信号橙，每页一处                                       |
-| ghost  | `#5C5C5C` | 图表里「旧版本 / 对照组」的条                          |
+| bg     | `#F4F3EF` | 米白纸面画布；也是墨块上的主文字色                     |
+| text   | `#0A0A0A` | 墨黑：标题、大数字、数值、页码当前页、实心墨块         |
+| body   | `#3D3D3D` | 深灰：正文、副标题、表格里的键                         |
+| muted  | `#5E5E5E` | 元信息：眉标、页眉页脚、行列编号、刻度数字（最浅的字） |
+| grid   | `#DCDAD3` | 栅格细线（极淡，只做底纹）                             |
+| frame  | `#B5B3AC` | 内容区外框线、表格行分隔线                             |
+| mark   | `#8C8A84` | 栅格交点上的十字对位标记                               |
+| accent | `#FF4F00` | 信号橙，每页一处（只做色块，不做文字）                 |
+| ghost  | `#A8A69F` | 图表里「旧版本 / 对照组」的条                          |
+| dim    | `#9A9A9A` | 墨块上的次级文字（`$` 提示符、注释）                   |
 
-文字不要暗于 `#8A8A8A`；比它暗的灰只能用于线和标记。
+纸面上的文字不要浅于 `#5E5E5E`；比它浅的灰只能用于线和标记。墨块上的文字用 `bg` 或 `dim`，不要用 `muted`。信号橙在纸面上对比不够，不要拿它写字。
 
 ## 字体
 
@@ -46,7 +47,7 @@ mode: dark
 | 正文 / 副标题            | 26–30 px    | 行高 1.6，主动断行，不留孤字                      |
 | 表格数值                 | 26–32 px 等宽 |                                                 |
 | 眉标                     | 22 px       | 标签 600 字重，字距 `0.12em`                      |
-| 页眉 / 页脚 / 编号 / 刻度 | 20 px 等宽 | `muted` 色                                         |
+| 页眉 / 页脚 / 编号 / 刻度 | 20 px 等宽 | `muted` 色（墨块上的注释 22 px）                   |
 
 ## 版式
 
@@ -58,10 +59,10 @@ mode: dark
 - 超大数字用 SVG `<text>` 按**基线**定位（`BigNumber`），基线压在某条横向栅格线上（封面 y=840，数据页 y=720），右对齐时右边缘贴住 x=1800。
 - 每页都要有一个「主体」占掉半屏以上：封面是版本号，数据页是指标数字，结尾页是大字 + 横贯整行的命令行。其余信息用小字精确对齐在它旁边，留白要整块整块地留。
 - 三页结构各不相同：
-  - 封面：左栏标题 + 副标题 + 规格表，右侧超大版本号，版本号下方一条 2 px 米白基线和两端注释。
+  - 封面：左栏标题 + 副标题 + 规格表，右侧超大版本号，版本号基线压在一整行实心墨块（x 840–1800、y 840–960）的顶边上，两端注释反白写在墨块里。
   - 数据页：左上标题，左侧超大数字，右栏分位数表，底部横贯整页的刻度尺对比条。
-  - 结尾页：240 px 大字，一整行命令行框，下方四格步骤（每格 3.5 个模块宽、顶边 2 px 米白线）。
-- 直角，不用圆角、投影、渐变。分隔线 1 px `frame`，强调分隔用 2 px `text`。
+  - 结尾页：240 px 大字，一整行实心墨块命令行，下方四格步骤（每格 3.5 个模块宽、顶边 2 px 墨黑线）。
+- 直角，不用圆角、投影、渐变。分隔线 1 px `frame`，强调分隔用 2 px `text`。需要分量时直接铺 `text` 色的实心墨块（整模块对齐），不要靠阴影或描边制造层次；每页最多一到两块。
 
 ## 固定组件
 
@@ -77,14 +78,15 @@ const SANS =
 const MONO =
   '"SF Mono", SFMono-Regular, Menlo, Consolas, "PingFang SC", "Microsoft YaHei", monospace';
 
-const BG = '#000000';
-const TEXT = '#EDEDED';
-const BODY = '#A1A1A1';
-const MUTED = '#8A8A8A';
-const GRID = '#161616';
-const FRAME = '#2A2A2A';
-const MARK = '#4D4D4D';
+const BG = '#F4F3EF';
+const TEXT = '#0A0A0A';
+const BODY = '#3D3D3D';
+const MUTED = '#5E5E5E';
+const GRID = '#DCDAD3';
+const FRAME = '#B5B3AC';
+const MARK = '#8C8A84';
 const ACCENT = '#FF4F00';
+const DIM = '#9A9A9A';
 
 // 栅格：120 px 正方形模块，16 × 9。内容区 x 120–1800、y 120–960（14 列 × 7 行）
 const U = 120;
@@ -224,7 +226,7 @@ const Footer = ({ n, total }: { n: number; total: number }) => (
 
 ### Eyebrow（眉标）
 
-放在 y=160（第 A 行中部），编号等宽米白，短横线，标签 600 字重。
+放在 y=160（第 A 行中部），编号等宽墨黑，短横线，标签 600 字重。
 
 ```tsx
 const Eyebrow = ({ index, label }: { index: string; label: string }) => (
@@ -278,7 +280,7 @@ const BigNumber = ({
 
 ### 刻度尺对比条
 
-横贯 x 120–1800 的数值轴：1 px 米白轴线，每 20 单位一短刻（`muted`），每 100 单位一长刻（`text`）加 20 px 等宽数字。轴线上方两根 12 px 高的条：对照组 `#5C5C5C`、新版本 `ACCENT`，条尾右侧 16 px 写「数值　版本」。
+横贯 x 120–1800 的数值轴：1 px 墨黑轴线，每 20 单位一短刻（`muted`），每 100 单位一长刻（`text`）加 20 px 等宽数字。轴线上方两根 12 px 高的条：对照组 `#A8A69F`、新版本 `ACCENT`，条尾右侧 16 px 写「数值　版本」。
 
 ```tsx
 // 刻度尺：0–400 ms 映射到 x 120–1800，轴线在 y=888
@@ -298,9 +300,9 @@ const sx = (ms: number) => U + (ms / SCALE_MAX) * 1680;
 
 ## 气质
 
-一张瑞士国际主义海报，或者一家只做深色模式的基础设施公司（Vercel、Teenage Engineering 那种）做的发布会 deck：冷峻、精确、单色。栅格不藏在背后，而是被画出来——编号、刻度、十字对位标记让整页像一张工程图纸。构图靠一个占半屏的超大数字或大字，旁边用 20–30 px 的小字精确对齐注释，大小对比越极端越好。信号橙只出现一次，像仪器面板上唯一亮着的灯。
+一张印在米白纸上的瑞士国际主义海报，或者一家基础设施公司（Vercel、Teenage Engineering 那种）做的印刷感发布会 deck：冷峻、精确、单色。栅格不藏在背后，而是用墨线画出来——编号、刻度、十字对位标记让整页像一张工程图纸；整模块的实心墨块和超大黑字是画面的重量。构图靠一个占半屏的超大数字或大字，旁边用 20–30 px 的小字精确对齐注释，大小对比越极端越好。信号橙只出现一次，像仪器面板上唯一亮着的灯。
 
-避免：渐变、投影、圆角、照片、emoji、第二种强调色、同一页多处信号橙、文字暗于 `#8A8A8A`、正文小于 26 px、元信息小于 20 px、中文负字距和中文斜体、脱离栅格随手摆放的元素、三页同一个结构。
+避免：渐变、投影、圆角、照片、emoji、第二种强调色、同一页多处信号橙、纸面文字浅于 `#5E5E5E`、用信号橙写字、正文小于 26 px、元信息小于 20 px、中文负字距和中文斜体、脱离栅格随手摆放的元素、三页同一个结构。
 
 ## 示例
 
@@ -371,19 +373,26 @@ const Cover: Page = () => {
           4<tspan fill={ACCENT}>.</tspan>0
         </BigNumber>
       </div>
-      <div style={{ ...abs(840, 839, 960, 2), background: TEXT }} />
+      {/* 版本号下方：一整行实心墨块，基线正好压在它的顶边 */}
       <div
         style={{
-          ...abs(840, 860, 960),
+          ...abs(840, 840, 960, 120),
+          boxSizing: 'border-box',
+          background: TEXT,
           display: 'flex',
+          alignItems: 'center',
           justifyContent: 'space-between',
+          padding: '0 32px',
           fontFamily: MONO,
-          fontSize: 20,
-          color: MUTED,
+          fontSize: 22,
+          color: DIM,
+          ...enter(live, 200, 'mg-fade', 600),
         }}
       >
-        <span>v3.2 → v4.0</span>
-        <span>2026.11.16 正式可用</span>
+        <span>
+          v3.2 → <span style={{ color: BG }}>v4.0</span>
+        </span>
+        <span style={{ color: BG }}>2026.11.16 正式可用</span>
       </div>
 
       <Footer n={1} total={TOTAL} />
@@ -448,7 +457,7 @@ const Data: Page = () => {
       {/* 底部：对比刻度尺 */}
       <div style={{ ...abs(U, 776), fontFamily: MONO, fontSize: 20, color: MUTED }}>P99 冷启动 / 毫秒</div>
       {[
-        { ms: 340, y: 820, color: '#5C5C5C', label: '340ms　v3.2' },
+        { ms: 340, y: 820, color: '#A8A69F', label: '340ms　v3.2' },
         { ms: 47, y: 848, color: ACCENT, label: '47ms　v4.0' },
       ].map((b, i) => (
         <div key={b.label}>
@@ -543,8 +552,7 @@ const Closer: Page = () => {
         style={{
           ...abs(U, 540, 1680, 120),
           boxSizing: 'border-box',
-          border: `1px solid ${TEXT}`,
-          background: '#0A0A0A',
+          background: TEXT,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -553,8 +561,8 @@ const Closer: Page = () => {
           ...enter(live, 240),
         }}
       >
-        <span style={{ fontSize: 48, color: TEXT, display: 'flex', alignItems: 'center' }}>
-          <span style={{ color: MUTED, marginRight: 28 }}>$</span>
+        <span style={{ fontSize: 48, color: BG, display: 'flex', alignItems: 'center' }}>
+          <span style={{ color: DIM, marginRight: 28 }}>$</span>
           atlas deploy --prod
           <span
             style={{
@@ -567,7 +575,7 @@ const Closer: Page = () => {
             }}
           />
         </span>
-        <span style={{ fontSize: 22, color: MUTED }}>↵ 回车即上线</span>
+        <span style={{ fontSize: 22, color: DIM }}>↵ 回车即上线</span>
       </div>
 
       {/* 四步：每格 3.5 个模块宽 */}

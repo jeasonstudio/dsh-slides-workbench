@@ -1,31 +1,36 @@
 ---
-name: 珊瑚夜灯
-description: 深色效率工具风格：近黑点阵画布、一盏珊瑚红暖光、带 1px 高光边的 macOS 浮窗命令面板、研发流水线、立体键帽，适合工程效率与研发流程。
-mode: dark
+name: 珊瑚晨光
+description: 浅色效率工具风格：暖白点阵画布、一抹珊瑚红晨光、细描边加暖色柔影的 macOS 浮窗命令面板、墨色终端、研发流水线、立体键帽，适合工程效率与研发流程。
+mode: light
 ---
 
-# 珊瑚夜灯
+# 珊瑚晨光
 
 改编自 open-slide 官方主题 Command Bar（MIT），已汉化并重做，只用系统字体，不加载任何外部字体和图片。
 
-一句话：**像 Raycast / Linear 官网截图一样的暗色 deck**。每一页都有一个用 CSS / SVG 画出来的「产品界面」当主体（命令面板浮窗、流水线、键帽），珊瑚红暖光从主体背后透出来，像深夜桌上的一盏小灯。
+一句话：**像 Raycast / Linear 官网浅色截图一样的 deck**。每一页都有一个用 CSS / SVG 画出来的「产品界面」当主体（命令面板浮窗、流水线、键帽），浮在暖白纸面上，珊瑚红像清晨的第一缕光，从主体背后晕开一片暖色。
 
 ## 配色
 
 | 角色        | 色值                         | 用途                                                       |
 | ----------- | ---------------------------- | ---------------------------------------------------------- |
-| bg          | `#0E0E0E`                    | 近黑画布                                                   |
-| surface     | `#18181A`                    | 卡片、眉标胶囊、提示条                                     |
-| surfaceHi   | `#232326`                    | 面板里选中的行、小标签底色                                 |
-| border      | `#2A2A2D`                    | 所有面板和卡片的 1px 描边、分隔线                          |
-| text        | `#F5F5F5`                    | 标题、选中行、大数字                                       |
-| body        | `#A1A1AA`                    | 正文、副标题、未选中的图标；**正文不许比它更暗**           |
-| muted       | `#8B8B93`                    | 元信息：等宽副标题、序号、耗时、页脚路径（字号 ≥ 20px）    |
-| accent      | `#FF6363`                    | 珊瑚红：光晕、输入光标、选中条、进行中的工序、亮起的键帽   |
+| bg          | `#F7F3EE`                    | 暖白纸面画布                                               |
+| surface     | `#FFFFFF`                    | 卡片、眉标胶囊、提示条、命令面板                           |
+| surfaceHi   | `#F2ECE5`                    | 面板里选中的行、小标签和未选中图标的底色                   |
+| border      | `#E3DBD1`                    | 所有面板和卡片的 1px 描边、分隔线                          |
+| text        | `#1C1917`                    | 标题、选中行、大数字                                       |
+| body        | `#57524C`                    | 正文、副标题、未选中的图标；**正文不许比它更浅**           |
+| muted       | `#6B645D`                    | 元信息：等宽副标题、序号、耗时、页脚路径（字号 ≥ 20px）    |
+| accent      | `#FF6363`                    | 珊瑚红：光晕、输入光标、选中条、进度条、亮起的键帽（只做填充，不做小字） |
+| accentInk   | `#C93636`                    | 深珊瑚：浅底上的珊瑚色文字（「进行中」胶囊、进行中的命令）  |
 | accentSoft  | `rgba(255, 99, 99, 0.12)`    | 低透明度强调底色（「进行中」胶囊）                         |
+| ink         | `#1C1917`                    | 墨色底：终端窗口、安装命令条（全页唯一的深色块）           |
 
-- 次一级的浅字（未选中行的标题、提示条文字）用 `#D4D4D8`，介于 text 和 body 之间。
-- 珊瑚红只表达「当前 / 正在发生」：选中的命令、进行中的工序、按下去的那颗键。已完成用中性灰 `#5A5A60` / `#8B8B93`，等待中用虚线描边。
+- 次一级的深字（未选中行的标题、提示条文字）用 `#3F3A36`，介于 text 和 body 之间。
+- `accent` 在白底上对比度只有 2.9，**珊瑚色的字一律用 `accentInk`**（白底 5.2:1、accentSoft 底 4.6:1）；墨色底上的 `$` 提示符可以直接用 `accent`（6:1）。
+- 墨色终端里的文字：正文 `#D6D3D1`，标题栏 / 次要信息 `#A8A29E`，描边 `#2E2A27`，标题栏底 `#26221F`。
+- 珊瑚红只表达「当前 / 正在发生」：选中的命令、进行中的工序、按下去的那颗键。已完成用中性暖灰 `#A8A29E` / `muted`，等待中用 2px 虚线描边 `#CFC5B9`。
+- 投影一律用暖棕色 `rgba(122,62,40,…)`，不要用纯黑投影；强调元素（进行中卡片、亮起的键帽）用珊瑚色柔影 `rgba(255,99,99,…)` 代替暗色版的发光。
 - 唯一允许的「多色」是 macOS 窗口左上角的红黄绿三点（透明度 0.85）。
 
 ## 字体
@@ -48,11 +53,11 @@ mode: dark
 
 - 画布 1920 × 1080，主体元素用 `abs(left, top, width)` 绝对定位。左右边距 120，页脚 `bottom: 56`。
 - 三页三种结构，不要雷同：
-  1. **封面 · 左文右窗**：左列（x 120，宽 820）垂直居中放眉标、大标题、两行导语、一条细线隔开的三个大数字；右侧放命令面板浮窗（x 1000，y 268，宽 800），它背后斜上方叠一扇半透明终端窗口（x 1180，y 112，宽 640，透明度 0.55）制造前后层次。
+  1. **封面 · 左文右窗**：左列（x 120，宽 820）垂直居中放眉标、大标题、两行导语、一条细线隔开的三个大数字；右侧放命令面板浮窗（x 1000，y 268，宽 800），它背后斜上方叠一扇墨色终端窗口（x 1180，y 112，宽 640）制造前后层次——白色面板压在深色终端上，明暗对比就是层次。
   2. **内容 · 流水线**：顶部左边眉标 + 页面标题，右边（x 1180）两行补充说明；中部一条进度轨道（y 392）加五张工序卡（y 452，宽 304，间距 40，高 300），卡片和轨道之间用短竖线连接；底部通栏键位提示条（y 812，高 104）。
-  3. **结尾 · 居中键帽**：两颗 236 px 立体键帽 `⌘ + K` 居中（y 176），亮起的 K 键背后是光晕；下面依次是 96 px 居中大标题、一句导语、一条可复制的安装命令。
-- 背景三层，从下往上：`bg` 纯色 → `DotGrid` 点阵（以主体为圆心淡出）→ `Glow` 珊瑚红光晕（圆心落在主体背后或下方，让光从主体边缘透出来）→ 主体。光晕绝不压在大标题后面。
-- 浮窗质感：1 px `border` 描边 + 顶部 1 px 白色内高光 + 两层柔和投影（`WINDOW_SHADOW`）。命令面板、终端窗口、已完成 / 进行中的工序卡都用它；等待中的卡片不加投影、用虚线描边。
+  3. **结尾 · 居中键帽**：两颗 236 px 立体键帽 `⌘ + K` 居中（y 176），亮起的 K 键整颗是珊瑚红、背后是光晕；下面依次是 96 px 居中大标题、一句导语、一条墨色底的可复制安装命令。
+- 背景三层，从下往上：`bg` 纯色 → `DotGrid` 暖灰点阵（以主体为圆心淡出）→ `Glow` 珊瑚红色场（圆心落在主体背后或下方，在纸面上晕出一片淡淡的桃色）→ 主体。光晕绝不压在大标题后面。
+- 浮窗质感：1 px `border` 描边 + 两层暖棕柔影（`WINDOW_SHADOW`，远处大而淡、近处小而实）。命令面板用它；已完成的工序卡、提示条用更轻的同色投影；等待中的卡片透明底、不加投影、用虚线描边。
 - 圆角：浮窗 14–18，卡片 18，行 12，小标签 8，眉标 999。不要直角卡片。
 
 ## 固定组件
@@ -81,20 +86,22 @@ const SANS =
   '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif';
 
 const MONO = '"SF Mono", SFMono-Regular, Menlo, Consolas, "PingFang SC", "Microsoft YaHei", monospace';
-const BG = '#0E0E0E';
-const SURFACE = '#18181A';
-const SURFACE_HI = '#232326';
-const BORDER = '#2A2A2D';
-const TEXT = '#F5F5F5';
-const BODY = '#A1A1AA';
-const MUTED = '#8B8B93';
+const BG = '#F7F3EE';
+const SURFACE = '#FFFFFF';
+const SURFACE_HI = '#F2ECE5';
+const BORDER = '#E3DBD1';
+const TEXT = '#1C1917';
+const BODY = '#57524C';
+const MUTED = '#6B645D';
 const ACCENT = '#FF6363';
+const ACCENT_INK = '#C93636';
 const ACCENT_SOFT = 'rgba(255, 99, 99, 0.12)';
+const INK = '#1C1917';
 const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
 
-// 浮窗：1px 描边 + 顶部 1px 高光 + 柔和投影
+// 浮窗：1px 描边 + 两层暖色柔影（远处大而淡，近处小而实）
 const WINDOW_SHADOW =
-  'inset 0 1px 0 rgba(255,255,255,0.07), 0 0 0 1px rgba(0,0,0,0.6), 0 40px 120px rgba(0,0,0,0.65), 0 12px 32px rgba(0,0,0,0.45)';
+  '0 1px 0 rgba(255,255,255,0.9) inset, 0 40px 100px rgba(122,62,40,0.16), 0 12px 28px rgba(122,62,40,0.10), 0 2px 4px rgba(28,25,23,0.05)';
 
 const abs = (left: number, top: number, width?: number): CSSProperties => ({
   position: 'absolute',
@@ -156,7 +163,7 @@ const Heading = ({ children }: { children: ReactNode }) => (
 );
 ```
 
-### Eyebrow（带发光圆点的胶囊眉标）
+### Eyebrow（带珊瑚圆点的胶囊眉标）
 
 ```tsx
 const Eyebrow = ({ children }: { children: ReactNode }) => (
@@ -169,7 +176,7 @@ const Eyebrow = ({ children }: { children: ReactNode }) => (
       borderRadius: 999,
       border: `1px solid ${BORDER}`,
       background: SURFACE,
-      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
+      boxShadow: '0 4px 14px rgba(122,62,40,0.06)',
       fontFamily: MONO,
       fontSize: 20,
       letterSpacing: '0.08em',
@@ -178,7 +185,7 @@ const Eyebrow = ({ children }: { children: ReactNode }) => (
   >
     <span
       aria-hidden
-      style={{ width: 8, height: 8, borderRadius: '50%', background: ACCENT, boxShadow: `0 0 12px ${ACCENT}` }}
+      style={{ width: 8, height: 8, borderRadius: '50%', background: ACCENT, boxShadow: '0 0 0 4px rgba(255,99,99,0.2)' }}
     />
     {children}
   </div>
@@ -187,7 +194,7 @@ const Eyebrow = ({ children }: { children: ReactNode }) => (
 
 ### Kbd（行内键帽）
 
-带渐变顶面、1px 内高光和 2px 底边的小键帽。正文、面板、提示条里都用它，`size` 取 32–44。
+白色渐变顶面、1px 描边和 2px 暖灰底边的小键帽。正文、面板、提示条里都用它，`size` 取 32–44。
 
 ```tsx
 const Kbd = ({ children, size = 40 }: { children: ReactNode; size?: number }) => (
@@ -205,10 +212,10 @@ const Kbd = ({ children, size = 40 }: { children: ReactNode; size?: number }) =>
       fontSize: Math.round(size * (children === '⌘' || children === '↵' ? 0.6 : 0.5)),
       fontWeight: 500,
       color: TEXT,
-      background: 'linear-gradient(180deg, #2C2C30 0%, #222225 100%)',
-      border: '1px solid #36363A',
+      background: 'linear-gradient(180deg, #FFFFFF 0%, #F5F0EA 100%)',
+      border: '1px solid #D9D0C5',
       borderRadius: Math.round(size * 0.2),
-      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 0 #08080A',
+      boxShadow: 'inset 0 1px 0 #FFFFFF, 0 2px 0 #D9D0C5',
     }}
   >
     {children}
@@ -218,10 +225,10 @@ const Kbd = ({ children, size = 40 }: { children: ReactNode; size?: number }) =>
 
 ### KeyCap（大号立体键帽）
 
-结尾页的主体。外壳是侧壁（底部 6% 的实色投影就是键帽的「厚度」），里面再嵌一个略凹的顶面；`lit` 的那颗被珊瑚红从下方照亮。
+结尾页的主体。外壳是侧壁（底部 6% 的实色投影就是键帽的「厚度」），里面再嵌一个略凹的顶面；普通键是象牙白，`lit` 的那颗整颗染成珊瑚红、白字，投下珊瑚色柔影。
 
 ```tsx
-// 大号立体键帽：顶面 + 侧壁 + 落地投影；lit 时被珊瑚红从下方照亮
+// 大号立体键帽：顶面 + 侧壁 + 落地投影；lit 时整颗染成珊瑚红，投下珊瑚色柔影
 const KeyCap = ({ children, size = 220, lit = false }: { children: ReactNode; size?: number; lit?: boolean }) => (
   <div
     style={{
@@ -229,14 +236,14 @@ const KeyCap = ({ children, size = 220, lit = false }: { children: ReactNode; si
       width: size,
       height: size,
       borderRadius: size * 0.18,
-      background: 'linear-gradient(180deg, #2A2A2E 0%, #1A1A1D 100%)',
-      border: `1px solid ${lit ? 'rgba(255,99,99,0.55)' : 'rgba(255,255,255,0.08)'}`,
+      background: lit ? 'linear-gradient(180deg, #FF7B72 0%, #F4554F 100%)' : 'linear-gradient(180deg, #FFFFFF 0%, #EEE7DE 100%)',
+      border: `1px solid ${lit ? '#E04848' : '#DDD4C9'}`,
       boxShadow: [
-        'inset 0 1px 0 rgba(255,255,255,0.16)',
-        `0 ${size * 0.06}px 0 ${lit ? '#3A1A1A' : '#111113'}`,
-        `0 ${size * 0.06}px 0 1px ${lit ? 'rgba(255,99,99,0.35)' : 'rgba(255,255,255,0.05)'}`,
-        '0 50px 80px rgba(0,0,0,0.7)',
-        lit ? '0 30px 120px rgba(255,99,99,0.35)' : '',
+        'inset 0 1px 0 rgba(255,255,255,0.7)',
+        `0 ${size * 0.06}px 0 ${lit ? '#C93636' : '#D5CBBE'}`,
+        `0 ${size * 0.06}px 0 1px ${lit ? '#B83030' : '#CFC4B6'}`,
+        lit ? '0 50px 90px rgba(255,99,99,0.38)' : '0 50px 80px rgba(122,62,40,0.18)',
+        '0 16px 24px rgba(28,25,23,0.08)',
       ]
         .filter(Boolean)
         .join(', '),
@@ -247,16 +254,18 @@ const KeyCap = ({ children, size = 220, lit = false }: { children: ReactNode; si
         position: 'absolute',
         inset: size * 0.07,
         borderRadius: size * 0.13,
-        background: 'linear-gradient(180deg, #202023 0%, #29292D 100%)',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), inset 0 -1px 0 rgba(0,0,0,0.4)',
+        background: lit ? 'linear-gradient(180deg, #FF6A64 0%, #FF8A7C 100%)' : 'linear-gradient(180deg, #F6F1EB 0%, #FFFFFF 100%)',
+        boxShadow: lit
+          ? 'inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -1px 0 rgba(150,30,30,0.2)'
+          : 'inset 0 1px 2px rgba(122,62,40,0.08), inset 0 -1px 0 #FFFFFF',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         fontFamily: MONO,
         fontSize: size * 0.42,
         fontWeight: 500,
-        color: lit ? '#FF8A80' : TEXT,
-        textShadow: lit ? '0 0 24px rgba(255,99,99,0.6)' : 'none',
+        color: lit ? '#FFFFFF' : TEXT,
+        textShadow: lit ? '0 2px 0 rgba(150,30,30,0.25)' : 'none',
       }}
     >
       {children}
@@ -265,9 +274,9 @@ const KeyCap = ({ children, size = 220, lit = false }: { children: ReactNode; si
 );
 ```
 
-### Glow（珊瑚红光晕）与 DotGrid（点阵底纹）
+### Glow（珊瑚红色场）与 DotGrid（点阵底纹）
 
-光晕用多段径向渐变，不用 `filter: blur`；`opacity` 取 0.2–0.4，主体越大越实，光晕越可以亮。点阵用遮罩以主体为圆心淡出，边缘不要出现生硬的网格。
+光晕用多段径向渐变，不用 `filter: blur`；浅底上它是一片桃色色场而不是发光，`opacity` 取 0.2–0.32，再高纸面会发粉。点阵用遮罩以主体为圆心淡出，边缘不要出现生硬的网格。
 
 ```tsx
 const Glow = ({
@@ -307,7 +316,7 @@ const DotGrid = ({ x, y, r = 900 }: { x: number; y: number; r?: number }) => {
       style={{
         position: 'absolute',
         inset: 0,
-        backgroundImage: 'radial-gradient(rgba(255,255,255,0.14) 1.2px, transparent 1.6px)',
+        backgroundImage: 'radial-gradient(rgba(87,82,76,0.22) 1.2px, transparent 1.6px)',
         backgroundSize: '36px 36px',
         backgroundPosition: '18px 18px',
         WebkitMaskImage: mask,
@@ -409,7 +418,7 @@ const Icon = ({ name, size = 24, color = BODY }: { name: string; size?: number; 
 
 ### CommandPalette（命令面板浮窗）
 
-主题的招牌。输入行（放大镜 + 查询词 + 珊瑚红光标 + 右侧范围标签）→ 分组标签 → 结果列表 → 底栏。第一行是选中态：`surfaceHi` 底色、1 px 亮描边、左侧一根发光的珊瑚红竖条、图标方块换成珊瑚红渐变。
+主题的招牌。输入行（放大镜 + 查询词 + 珊瑚红光标 + 右侧范围标签）→ 分组标签 → 结果列表 → 底栏。第一行是选中态：`surfaceHi` 底色、1 px `border` 描边、左侧一根带珊瑚柔影的珊瑚红竖条、图标方块换成珊瑚红渐变。
 
 ```tsx
 type Command = { icon: string; title: string; sub: string; kbd: string[] };
@@ -430,7 +439,7 @@ const CommandPalette = ({
     style={{
       width,
       borderRadius: 18,
-      background: 'linear-gradient(180deg, #1C1C1F 0%, #161618 100%)',
+      background: 'linear-gradient(180deg, #FFFFFF 0%, #FCFAF7 100%)',
       border: `1px solid ${BORDER}`,
       boxShadow: WINDOW_SHADOW,
       overflow: 'hidden',
@@ -491,7 +500,7 @@ const CommandPalette = ({
               padding: '16px 18px',
               borderRadius: 12,
               background: on ? SURFACE_HI : 'transparent',
-              boxShadow: on ? 'inset 0 1px 0 rgba(255,255,255,0.06), 0 0 0 1px #303034' : 'none',
+              boxShadow: on ? `0 0 0 1px ${BORDER}` : 'none',
             }}
           >
             {on && (
@@ -505,7 +514,7 @@ const CommandPalette = ({
                   width: 4,
                   borderRadius: 2,
                   background: ACCENT,
-                  boxShadow: `0 0 14px ${ACCENT}`,
+                  boxShadow: '0 2px 8px rgba(255,99,99,0.45)',
                 }}
               />
             )}
@@ -518,14 +527,14 @@ const CommandPalette = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: on ? 'linear-gradient(135deg, #FF6363, #FF9B8B)' : '#252528',
-                boxShadow: on ? '0 6px 20px rgba(255,99,99,0.35)' : 'inset 0 1px 0 rgba(255,255,255,0.06)',
+                background: on ? 'linear-gradient(135deg, #FF6363, #FF9B8B)' : SURFACE_HI,
+                boxShadow: on ? '0 6px 18px rgba(255,99,99,0.35)' : `inset 0 0 0 1px ${BORDER}`,
               }}
             >
               <Icon name={r.icon} size={26} color={on ? '#FFFFFF' : BODY} />
             </span>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontSize: 26, fontWeight: 600, color: on ? TEXT : '#D4D4D8' }}>{r.title}</span>
+              <span style={{ fontSize: 26, fontWeight: 600, color: on ? TEXT : '#3F3A36' }}>{r.title}</span>
               <span style={{ fontFamily: MONO, fontSize: 20, color: MUTED }}>{r.sub}</span>
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
@@ -546,7 +555,7 @@ const CommandPalette = ({
         gap: 14,
         padding: '16px 30px',
         borderTop: `1px solid ${BORDER}`,
-        background: 'rgba(0,0,0,0.25)',
+        background: '#FAF7F3',
         fontSize: 20,
         color: BODY,
       }}
@@ -567,20 +576,20 @@ const CommandPalette = ({
 );
 ```
 
-### MacWindow（macOS 窗口）
+### MacWindow（macOS 终端窗口）
 
-带红黄绿三点和居中标题的窗口壳，放在命令面板背后当「第二层」，整体透明度 0.5–0.6。
+墨色底、带红黄绿三点和居中标题的终端窗口壳，放在白色命令面板背后当「第二层」，不降透明度——靠明暗对比拉开前后。
 
 ```tsx
-// macOS 窗口：红黄绿三点 + 标题 + 内容
+// macOS 终端窗口：墨色底 + 红黄绿三点 + 标题 + 内容（全页唯一的深色块）
 const MacWindow = ({ title, width, children }: { title: string; width: number; children: ReactNode }) => (
   <div
     style={{
       width,
       borderRadius: 14,
-      background: '#141416',
-      border: `1px solid ${BORDER}`,
-      boxShadow: WINDOW_SHADOW,
+      background: INK,
+      border: '1px solid #2E2A27',
+      boxShadow: '0 40px 100px rgba(122,62,40,0.22), 0 12px 28px rgba(28,25,23,0.18)',
       overflow: 'hidden',
     }}
   >
@@ -590,14 +599,14 @@ const MacWindow = ({ title, width, children }: { title: string; width: number; c
         alignItems: 'center',
         gap: 10,
         padding: '14px 18px',
-        borderBottom: `1px solid ${BORDER}`,
-        background: '#1A1A1D',
+        borderBottom: '1px solid #2E2A27',
+        background: '#26221F',
       }}
     >
       {['#FF5F57', '#FEBC2E', '#28C840'].map((c) => (
         <span key={c} style={{ width: 13, height: 13, borderRadius: '50%', background: c, opacity: 0.85 }} />
       ))}
-      <span style={{ flex: 1, textAlign: 'center', fontFamily: MONO, fontSize: 20, color: MUTED, marginRight: 60 }}>
+      <span style={{ flex: 1, textAlign: 'center', fontFamily: MONO, fontSize: 20, color: '#A8A29E', marginRight: 60 }}>
         {title}
       </span>
     </div>
@@ -608,7 +617,7 @@ const MacWindow = ({ title, width, children }: { title: string; width: number; c
 
 ### StageCard（流水线工序卡）
 
-三种状态：`done`（灰色进度条满格、打勾胶囊）、`running`（珊瑚红描边、暖色渐变底、珊瑚红光、进度 64%）、`pending`（虚线描边、无投影、标题降为 `body`）。一页里只能有一个 `running`。
+三种状态：`done`（白卡、暖灰进度条满格、打勾胶囊）、`running`（珊瑚红描边、浅桃渐变底、珊瑚色柔影、进度 64%）、`pending`（透明底、虚线描边、无投影、标题降为 `body`）。一页里只能有一个 `running`。
 
 ```tsx
 type Stage = { name: string; cmd: string; time: string; state: 'done' | 'running' | 'pending' };
@@ -632,13 +641,13 @@ const StageCard = ({ s, i, live }: { s: Stage; i: number; live: boolean }) => {
         boxSizing: 'border-box',
         padding: '28px 28px 26px',
         borderRadius: 18,
-        background: running ? 'linear-gradient(180deg, #24191A 0%, #18181A 100%)' : SURFACE,
-        border: pending ? `1px dashed #3A3A3E` : `1px solid ${running ? 'rgba(255,99,99,0.5)' : BORDER}`,
+        background: running ? 'linear-gradient(180deg, #FFEFEC 0%, #FFFFFF 100%)' : pending ? 'transparent' : SURFACE,
+        border: pending ? `2px dashed #CFC5B9` : `1px solid ${running ? 'rgba(255,99,99,0.6)' : BORDER}`,
         boxShadow: running
-          ? `inset 0 1px 0 rgba(255,255,255,0.07), 0 30px 80px rgba(255,99,99,0.18), 0 20px 50px rgba(0,0,0,0.5)`
+          ? '0 30px 70px rgba(255,99,99,0.22), 0 10px 24px rgba(122,62,40,0.08)'
           : pending
             ? 'none'
-            : 'inset 0 1px 0 rgba(255,255,255,0.06), 0 20px 50px rgba(0,0,0,0.45)',
+            : '0 18px 44px rgba(122,62,40,0.10), 0 2px 4px rgba(28,25,23,0.04)',
         display: 'flex',
         flexDirection: 'column',
         animation: enter(live, 120 + i * 90),
@@ -654,7 +663,7 @@ const StageCard = ({ s, i, live }: { s: Stage; i: number; live: boolean }) => {
             fontSize: 20,
             padding: '4px 12px',
             borderRadius: 999,
-            color: running ? ACCENT : pending ? MUTED : BODY,
+            color: running ? ACCENT_INK : pending ? MUTED : BODY,
             background: running ? ACCENT_SOFT : 'transparent',
             border: running ? 'none' : `1px solid ${BORDER}`,
           }}
@@ -668,21 +677,21 @@ const StageCard = ({ s, i, live }: { s: Stage; i: number; live: boolean }) => {
         style={{
           fontFamily: MONO,
           fontSize: 20,
-          color: running ? '#FFB3AC' : BODY,
+          color: running ? ACCENT_INK : BODY,
           marginTop: 14,
           whiteSpace: 'nowrap',
         }}
       >
-        <span style={{ color: running ? ACCENT : MUTED }}>$ </span>
+        <span style={{ color: running ? ACCENT_INK : MUTED }}>$ </span>
         {s.cmd}
       </div>
       <div style={{ flex: 1 }} />
-      <div style={{ height: 4, borderRadius: 2, background: '#2A2A2D', overflow: 'hidden' }}>
+      <div style={{ height: 4, borderRadius: 2, background: '#ECE5DC', overflow: 'hidden' }}>
         <div
           style={{
             width: s.state === 'done' ? '100%' : running ? '64%' : '0%',
             height: '100%',
-            background: running ? ACCENT : '#5A5A60',
+            background: running ? ACCENT : '#A8A29E',
             transformOrigin: 'left',
             animation: live ? `cb-grow 1200ms ${EASE} ${400 + i * 120}ms both` : undefined,
           }}
@@ -708,11 +717,11 @@ const StageCard = ({ s, i, live }: { s: Stage; i: number; live: boolean }) => {
 
 ## 气质
 
-一个深夜还亮着的开发者工具发布页。画面像精致的 macOS 效率工具截图：近黑的桌面上铺着若隐若现的点阵，一扇带高光边的浮窗悬在那里，珊瑚红的暖光从它背后透出来。叙述用无衬线，凡是在说文件、路径、命令、按键的地方都用等宽；命令副标题保留英文标识符（`workflow · deploy-staging`），像真实工具里的命令 ID。
+一个清晨的开发者工具发布页。画面像精致的 macOS 效率工具浅色截图：暖白的纸面上铺着若隐若现的点阵，一扇白色浮窗带着暖棕柔影悬在那里，身后压着一扇墨色终端，珊瑚红的晨光从它背后晕开。叙述用无衬线，凡是在说文件、路径、命令、按键的地方都用等宽；命令副标题保留英文标识符（`workflow · deploy-staging`），像真实工具里的命令 ID。
 
-每页必须有一个**界面式**的视觉主体（面板、流水线、键帽、终端……），文字只占画面一侧或一层，不要只放一行标题加一团光。层次靠描边、内高光、投影和光晕的位置拉开，而不是靠更多颜色。
+每页必须有一个**界面式**的视觉主体（面板、流水线、键帽、终端……），文字只占画面一侧或一层，不要只放一行标题加一团光。层次靠描边、暖色投影、墨色终端的明暗对比和光晕的位置拉开，而不是靠更多颜色。
 
-避免：浅色背景、多色配色、照片和外部图片、装饰性 emoji、直角卡片、中文斜体与负字距、低于 20 px 的字、比 `#A1A1AA` 更暗的正文、紫色 / 蓝色的极光式大面积渐变（那是另一个主题的语言）。
+避免：纯黑投影和只在暗底上成立的发光（`0 0 24px` 一类的珊瑚外发光）、浅灰小字、珊瑚色 `#FF6363` 直接做文字、多色配色、照片和外部图片、装饰性 emoji、直角卡片、中文斜体与负字距、低于 20 px 的字、比 `#57524C` 更浅的正文、紫色 / 蓝色的极光式大面积渐变（那是另一个主题的语言）。
 
 ## 示例
 
@@ -734,11 +743,11 @@ const Cover: Page = () => {
     <div style={pageBase}>
       <style>{styles}</style>
       <DotGrid x={1400} y={540} r={1000} />
-      <Glow x={1300} y={640} size={1700} opacity={0.4} live={live} />
+      <Glow x={1300} y={640} size={1700} opacity={0.3} live={live} />
       {/* 背后的终端窗口，制造前后层次 */}
-      <div style={{ ...abs(1180, 112), opacity: 0.55, animation: enter(live, 0, 900) }}>
+      <div style={{ ...abs(1180, 112), animation: enter(live, 0, 900) }}>
         <MacWindow title="~/apps/checkout — zsh" width={640}>
-          <div style={{ padding: '22px 26px', fontFamily: MONO, fontSize: 20, lineHeight: 1.75, color: MUTED }}>
+          <div style={{ padding: '22px 26px', fontFamily: MONO, fontSize: 20, lineHeight: 1.75, color: '#D6D3D1' }}>
             <div>
               <span style={{ color: ACCENT }}>$</span> git push origin main
             </div>
@@ -845,12 +854,12 @@ const Content: Page = () => {
       </p>
 
       {/* 进度轨道 */}
-      <div style={{ ...abs(firstX, nodeY - 1, lastX - firstX), height: 2, background: '#2A2A2D' }} />
+      <div style={{ ...abs(firstX, nodeY - 1, lastX - firstX), height: 2, background: '#D9D0C5' }} />
       <div
         style={{
           ...abs(firstX, nodeY - 1, runX - firstX),
           height: 2,
-          background: `linear-gradient(90deg, #5A5A60, ${ACCENT})`,
+          background: `linear-gradient(90deg, #A8A29E, ${ACCENT})`,
           transformOrigin: 'left',
           animation: live ? `cb-grow 1400ms ${EASE} 200ms both` : undefined,
         }}
@@ -879,9 +888,9 @@ const Content: Page = () => {
                 inset: 0,
                 borderRadius: '50%',
                 boxSizing: 'border-box',
-                background: s.state === 'pending' ? BG : running ? ACCENT : '#8B8B93',
-                border: s.state === 'pending' ? '2px solid #4A4A50' : 'none',
-                boxShadow: running ? `0 0 0 6px rgba(255,99,99,0.18), 0 0 24px ${ACCENT}` : 'none',
+                background: s.state === 'pending' ? BG : running ? ACCENT : MUTED,
+                border: s.state === 'pending' ? '2px solid #CFC5B9' : 'none',
+                boxShadow: running ? '0 0 0 6px rgba(255,99,99,0.2), 0 4px 14px rgba(255,99,99,0.5)' : 'none',
               }}
             />
           </div>
@@ -895,7 +904,7 @@ const Content: Page = () => {
             ...abs(stageX(i) + STAGE_W / 2, nodeY + 14),
             width: 1,
             height: 452 - nodeY - 14,
-            background: s.state === 'running' ? 'rgba(255,99,99,0.5)' : '#2A2A2D',
+            background: s.state === 'running' ? 'rgba(255,99,99,0.6)' : '#D9D0C5',
           }}
         />
       ))}
@@ -910,9 +919,9 @@ const Content: Page = () => {
           height: 104,
           boxSizing: 'border-box',
           borderRadius: 18,
-          background: 'rgba(24,24,26,0.85)',
+          background: SURFACE,
           border: `1px solid ${BORDER}`,
-          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
+          boxShadow: '0 18px 44px rgba(122,62,40,0.08), 0 2px 4px rgba(28,25,23,0.04)',
           display: 'flex',
           alignItems: 'center',
           animation: enter(live, 600),
@@ -940,7 +949,7 @@ const Content: Page = () => {
                 {k}
               </Kbd>
             ))}
-            <span style={{ fontSize: 26, color: '#D4D4D8', marginLeft: 12 }}>{h.label}</span>
+            <span style={{ fontSize: 26, color: '#3F3A36', marginLeft: 12 }}>{h.label}</span>
           </div>
         ))}
       </div>
@@ -1003,12 +1012,12 @@ const Closer: Page = () => {
             gap: 22,
             padding: '18px 18px 18px 30px',
             borderRadius: 14,
-            background: SURFACE,
-            border: `1px solid ${BORDER}`,
-            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 20px 60px rgba(0,0,0,0.5)',
+            background: INK,
+            border: '1px solid #2E2A27',
+            boxShadow: '0 24px 60px rgba(122,62,40,0.20), 0 6px 16px rgba(28,25,23,0.12)',
             fontFamily: MONO,
             fontSize: 26,
-            color: TEXT,
+            color: '#F5F5F4',
           }}
         >
           <span>
@@ -1017,11 +1026,11 @@ const Closer: Page = () => {
           <span
             style={{
               fontSize: 20,
-              color: BODY,
+              color: '#D6D3D1',
               padding: '6px 14px',
               borderRadius: 8,
-              background: SURFACE_HI,
-              border: `1px solid ${BORDER}`,
+              background: '#2E2A27',
+              border: '1px solid #3A3532',
             }}
           >
             复制

@@ -15,20 +15,22 @@ const SANS =
   '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif';
 const MONO = '"SF Mono", SFMono-Regular, Menlo, Consolas, "PingFang SC", "Microsoft YaHei", monospace';
 
-const BG = '#0E0E0E';
-const SURFACE = '#18181A';
-const SURFACE_HI = '#232326';
-const BORDER = '#2A2A2D';
-const TEXT = '#F5F5F5';
-const BODY = '#A1A1AA';
-const MUTED = '#8B8B93';
+const BG = '#F7F3EE';
+const SURFACE = '#FFFFFF';
+const SURFACE_HI = '#F2ECE5';
+const BORDER = '#E3DBD1';
+const TEXT = '#1C1917';
+const BODY = '#57524C';
+const MUTED = '#6B645D';
 const ACCENT = '#FF6363';
+const ACCENT_INK = '#C93636';
 const ACCENT_SOFT = 'rgba(255, 99, 99, 0.12)';
+const INK = '#1C1917';
 const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
 
-// 浮窗：1px 描边 + 顶部 1px 高光 + 柔和投影
+// 浮窗：1px 描边 + 两层暖色柔影（远处大而淡，近处小而实）
 const WINDOW_SHADOW =
-  'inset 0 1px 0 rgba(255,255,255,0.07), 0 0 0 1px rgba(0,0,0,0.6), 0 40px 120px rgba(0,0,0,0.65), 0 12px 32px rgba(0,0,0,0.45)';
+  '0 1px 0 rgba(255,255,255,0.9) inset, 0 40px 100px rgba(122,62,40,0.16), 0 12px 28px rgba(122,62,40,0.10), 0 2px 4px rgba(28,25,23,0.05)';
 
 const abs = (left: number, top: number, width?: number): CSSProperties => ({
   position: 'absolute',
@@ -95,7 +97,7 @@ const Eyebrow = ({ children }: { children: ReactNode }) => (
       borderRadius: 999,
       border: `1px solid ${BORDER}`,
       background: SURFACE,
-      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
+      boxShadow: '0 4px 14px rgba(122,62,40,0.06)',
       fontFamily: MONO,
       fontSize: 20,
       letterSpacing: '0.08em',
@@ -104,7 +106,7 @@ const Eyebrow = ({ children }: { children: ReactNode }) => (
   >
     <span
       aria-hidden
-      style={{ width: 8, height: 8, borderRadius: '50%', background: ACCENT, boxShadow: `0 0 12px ${ACCENT}` }}
+      style={{ width: 8, height: 8, borderRadius: '50%', background: ACCENT, boxShadow: '0 0 0 4px rgba(255,99,99,0.2)' }}
     />
     {children}
   </div>
@@ -125,17 +127,17 @@ const Kbd = ({ children, size = 40 }: { children: ReactNode; size?: number }) =>
       fontSize: Math.round(size * (children === '⌘' || children === '↵' ? 0.6 : 0.5)),
       fontWeight: 500,
       color: TEXT,
-      background: 'linear-gradient(180deg, #2C2C30 0%, #222225 100%)',
-      border: '1px solid #36363A',
+      background: 'linear-gradient(180deg, #FFFFFF 0%, #F5F0EA 100%)',
+      border: '1px solid #D9D0C5',
       borderRadius: Math.round(size * 0.2),
-      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 0 #08080A',
+      boxShadow: 'inset 0 1px 0 #FFFFFF, 0 2px 0 #D9D0C5',
     }}
   >
     {children}
   </kbd>
 );
 
-// 大号立体键帽：顶面 + 侧壁 + 落地投影；lit 时被珊瑚红从下方照亮
+// 大号立体键帽：顶面 + 侧壁 + 落地投影；lit 时整颗染成珊瑚红，投下珊瑚色柔影
 const KeyCap = ({ children, size = 220, lit = false }: { children: ReactNode; size?: number; lit?: boolean }) => (
   <div
     style={{
@@ -143,14 +145,14 @@ const KeyCap = ({ children, size = 220, lit = false }: { children: ReactNode; si
       width: size,
       height: size,
       borderRadius: size * 0.18,
-      background: 'linear-gradient(180deg, #2A2A2E 0%, #1A1A1D 100%)',
-      border: `1px solid ${lit ? 'rgba(255,99,99,0.55)' : 'rgba(255,255,255,0.08)'}`,
+      background: lit ? 'linear-gradient(180deg, #FF7B72 0%, #F4554F 100%)' : 'linear-gradient(180deg, #FFFFFF 0%, #EEE7DE 100%)',
+      border: `1px solid ${lit ? '#E04848' : '#DDD4C9'}`,
       boxShadow: [
-        'inset 0 1px 0 rgba(255,255,255,0.16)',
-        `0 ${size * 0.06}px 0 ${lit ? '#3A1A1A' : '#111113'}`,
-        `0 ${size * 0.06}px 0 1px ${lit ? 'rgba(255,99,99,0.35)' : 'rgba(255,255,255,0.05)'}`,
-        '0 50px 80px rgba(0,0,0,0.7)',
-        lit ? '0 30px 120px rgba(255,99,99,0.35)' : '',
+        'inset 0 1px 0 rgba(255,255,255,0.7)',
+        `0 ${size * 0.06}px 0 ${lit ? '#C93636' : '#D5CBBE'}`,
+        `0 ${size * 0.06}px 0 1px ${lit ? '#B83030' : '#CFC4B6'}`,
+        lit ? '0 50px 90px rgba(255,99,99,0.38)' : '0 50px 80px rgba(122,62,40,0.18)',
+        '0 16px 24px rgba(28,25,23,0.08)',
       ]
         .filter(Boolean)
         .join(', '),
@@ -161,16 +163,18 @@ const KeyCap = ({ children, size = 220, lit = false }: { children: ReactNode; si
         position: 'absolute',
         inset: size * 0.07,
         borderRadius: size * 0.13,
-        background: 'linear-gradient(180deg, #202023 0%, #29292D 100%)',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), inset 0 -1px 0 rgba(0,0,0,0.4)',
+        background: lit ? 'linear-gradient(180deg, #FF6A64 0%, #FF8A7C 100%)' : 'linear-gradient(180deg, #F6F1EB 0%, #FFFFFF 100%)',
+        boxShadow: lit
+          ? 'inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -1px 0 rgba(150,30,30,0.2)'
+          : 'inset 0 1px 2px rgba(122,62,40,0.08), inset 0 -1px 0 #FFFFFF',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         fontFamily: MONO,
         fontSize: size * 0.42,
         fontWeight: 500,
-        color: lit ? '#FF8A80' : TEXT,
-        textShadow: lit ? '0 0 24px rgba(255,99,99,0.6)' : 'none',
+        color: lit ? '#FFFFFF' : TEXT,
+        textShadow: lit ? '0 2px 0 rgba(150,30,30,0.25)' : 'none',
       }}
     >
       {children}
@@ -215,7 +219,7 @@ const DotGrid = ({ x, y, r = 900 }: { x: number; y: number; r?: number }) => {
       style={{
         position: 'absolute',
         inset: 0,
-        backgroundImage: 'radial-gradient(rgba(255,255,255,0.14) 1.2px, transparent 1.6px)',
+        backgroundImage: 'radial-gradient(rgba(87,82,76,0.22) 1.2px, transparent 1.6px)',
         backgroundSize: '36px 36px',
         backgroundPosition: '18px 18px',
         WebkitMaskImage: mask,
@@ -320,7 +324,7 @@ const CommandPalette = ({
     style={{
       width,
       borderRadius: 18,
-      background: 'linear-gradient(180deg, #1C1C1F 0%, #161618 100%)',
+      background: 'linear-gradient(180deg, #FFFFFF 0%, #FCFAF7 100%)',
       border: `1px solid ${BORDER}`,
       boxShadow: WINDOW_SHADOW,
       overflow: 'hidden',
@@ -381,7 +385,7 @@ const CommandPalette = ({
               padding: '16px 18px',
               borderRadius: 12,
               background: on ? SURFACE_HI : 'transparent',
-              boxShadow: on ? 'inset 0 1px 0 rgba(255,255,255,0.06), 0 0 0 1px #303034' : 'none',
+              boxShadow: on ? `0 0 0 1px ${BORDER}` : 'none',
             }}
           >
             {on && (
@@ -395,7 +399,7 @@ const CommandPalette = ({
                   width: 4,
                   borderRadius: 2,
                   background: ACCENT,
-                  boxShadow: `0 0 14px ${ACCENT}`,
+                  boxShadow: '0 2px 8px rgba(255,99,99,0.45)',
                 }}
               />
             )}
@@ -408,14 +412,14 @@ const CommandPalette = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: on ? 'linear-gradient(135deg, #FF6363, #FF9B8B)' : '#252528',
-                boxShadow: on ? '0 6px 20px rgba(255,99,99,0.35)' : 'inset 0 1px 0 rgba(255,255,255,0.06)',
+                background: on ? 'linear-gradient(135deg, #FF6363, #FF9B8B)' : SURFACE_HI,
+                boxShadow: on ? '0 6px 18px rgba(255,99,99,0.35)' : `inset 0 0 0 1px ${BORDER}`,
               }}
             >
               <Icon name={r.icon} size={26} color={on ? '#FFFFFF' : BODY} />
             </span>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontSize: 26, fontWeight: 600, color: on ? TEXT : '#D4D4D8' }}>{r.title}</span>
+              <span style={{ fontSize: 26, fontWeight: 600, color: on ? TEXT : '#3F3A36' }}>{r.title}</span>
               <span style={{ fontFamily: MONO, fontSize: 20, color: MUTED }}>{r.sub}</span>
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
@@ -436,7 +440,7 @@ const CommandPalette = ({
         gap: 14,
         padding: '16px 30px',
         borderTop: `1px solid ${BORDER}`,
-        background: 'rgba(0,0,0,0.25)',
+        background: '#FAF7F3',
         fontSize: 20,
         color: BODY,
       }}
@@ -456,15 +460,15 @@ const CommandPalette = ({
   </div>
 );
 
-// macOS 窗口：红黄绿三点 + 标题 + 内容
+// macOS 终端窗口：墨色底 + 红黄绿三点 + 标题 + 内容（全页唯一的深色块）
 const MacWindow = ({ title, width, children }: { title: string; width: number; children: ReactNode }) => (
   <div
     style={{
       width,
       borderRadius: 14,
-      background: '#141416',
-      border: `1px solid ${BORDER}`,
-      boxShadow: WINDOW_SHADOW,
+      background: INK,
+      border: '1px solid #2E2A27',
+      boxShadow: '0 40px 100px rgba(122,62,40,0.22), 0 12px 28px rgba(28,25,23,0.18)',
       overflow: 'hidden',
     }}
   >
@@ -474,14 +478,14 @@ const MacWindow = ({ title, width, children }: { title: string; width: number; c
         alignItems: 'center',
         gap: 10,
         padding: '14px 18px',
-        borderBottom: `1px solid ${BORDER}`,
-        background: '#1A1A1D',
+        borderBottom: '1px solid #2E2A27',
+        background: '#26221F',
       }}
     >
       {['#FF5F57', '#FEBC2E', '#28C840'].map((c) => (
         <span key={c} style={{ width: 13, height: 13, borderRadius: '50%', background: c, opacity: 0.85 }} />
       ))}
-      <span style={{ flex: 1, textAlign: 'center', fontFamily: MONO, fontSize: 20, color: MUTED, marginRight: 60 }}>
+      <span style={{ flex: 1, textAlign: 'center', fontFamily: MONO, fontSize: 20, color: '#A8A29E', marginRight: 60 }}>
         {title}
       </span>
     </div>
@@ -504,11 +508,11 @@ const Cover: Page = () => {
     <div style={pageBase}>
       <style>{styles}</style>
       <DotGrid x={1400} y={540} r={1000} />
-      <Glow x={1300} y={640} size={1700} opacity={0.4} live={live} />
+      <Glow x={1300} y={640} size={1700} opacity={0.3} live={live} />
       {/* 背后的终端窗口，制造前后层次 */}
-      <div style={{ ...abs(1180, 112), opacity: 0.55, animation: enter(live, 0, 900) }}>
+      <div style={{ ...abs(1180, 112), animation: enter(live, 0, 900) }}>
         <MacWindow title="~/apps/checkout — zsh" width={640}>
-          <div style={{ padding: '22px 26px', fontFamily: MONO, fontSize: 20, lineHeight: 1.75, color: MUTED }}>
+          <div style={{ padding: '22px 26px', fontFamily: MONO, fontSize: 20, lineHeight: 1.75, color: '#D6D3D1' }}>
             <div>
               <span style={{ color: ACCENT }}>$</span> git push origin main
             </div>
@@ -598,13 +602,13 @@ const StageCard = ({ s, i, live }: { s: Stage; i: number; live: boolean }) => {
         boxSizing: 'border-box',
         padding: '28px 28px 26px',
         borderRadius: 18,
-        background: running ? 'linear-gradient(180deg, #24191A 0%, #18181A 100%)' : SURFACE,
-        border: pending ? `1px dashed #3A3A3E` : `1px solid ${running ? 'rgba(255,99,99,0.5)' : BORDER}`,
+        background: running ? 'linear-gradient(180deg, #FFEFEC 0%, #FFFFFF 100%)' : pending ? 'transparent' : SURFACE,
+        border: pending ? `2px dashed #CFC5B9` : `1px solid ${running ? 'rgba(255,99,99,0.6)' : BORDER}`,
         boxShadow: running
-          ? `inset 0 1px 0 rgba(255,255,255,0.07), 0 30px 80px rgba(255,99,99,0.18), 0 20px 50px rgba(0,0,0,0.5)`
+          ? '0 30px 70px rgba(255,99,99,0.22), 0 10px 24px rgba(122,62,40,0.08)'
           : pending
             ? 'none'
-            : 'inset 0 1px 0 rgba(255,255,255,0.06), 0 20px 50px rgba(0,0,0,0.45)',
+            : '0 18px 44px rgba(122,62,40,0.10), 0 2px 4px rgba(28,25,23,0.04)',
         display: 'flex',
         flexDirection: 'column',
         animation: enter(live, 120 + i * 90),
@@ -620,7 +624,7 @@ const StageCard = ({ s, i, live }: { s: Stage; i: number; live: boolean }) => {
             fontSize: 20,
             padding: '4px 12px',
             borderRadius: 999,
-            color: running ? ACCENT : pending ? MUTED : BODY,
+            color: running ? ACCENT_INK : pending ? MUTED : BODY,
             background: running ? ACCENT_SOFT : 'transparent',
             border: running ? 'none' : `1px solid ${BORDER}`,
           }}
@@ -634,21 +638,21 @@ const StageCard = ({ s, i, live }: { s: Stage; i: number; live: boolean }) => {
         style={{
           fontFamily: MONO,
           fontSize: 20,
-          color: running ? '#FFB3AC' : BODY,
+          color: running ? ACCENT_INK : BODY,
           marginTop: 14,
           whiteSpace: 'nowrap',
         }}
       >
-        <span style={{ color: running ? ACCENT : MUTED }}>$ </span>
+        <span style={{ color: running ? ACCENT_INK : MUTED }}>$ </span>
         {s.cmd}
       </div>
       <div style={{ flex: 1 }} />
-      <div style={{ height: 4, borderRadius: 2, background: '#2A2A2D', overflow: 'hidden' }}>
+      <div style={{ height: 4, borderRadius: 2, background: '#ECE5DC', overflow: 'hidden' }}>
         <div
           style={{
             width: s.state === 'done' ? '100%' : running ? '64%' : '0%',
             height: '100%',
-            background: running ? ACCENT : '#5A5A60',
+            background: running ? ACCENT : '#A8A29E',
             transformOrigin: 'left',
             animation: live ? `cb-grow 1200ms ${EASE} ${400 + i * 120}ms both` : undefined,
           }}
@@ -695,12 +699,12 @@ const Content: Page = () => {
       </p>
 
       {/* 进度轨道 */}
-      <div style={{ ...abs(firstX, nodeY - 1, lastX - firstX), height: 2, background: '#2A2A2D' }} />
+      <div style={{ ...abs(firstX, nodeY - 1, lastX - firstX), height: 2, background: '#D9D0C5' }} />
       <div
         style={{
           ...abs(firstX, nodeY - 1, runX - firstX),
           height: 2,
-          background: `linear-gradient(90deg, #5A5A60, ${ACCENT})`,
+          background: `linear-gradient(90deg, #A8A29E, ${ACCENT})`,
           transformOrigin: 'left',
           animation: live ? `cb-grow 1400ms ${EASE} 200ms both` : undefined,
         }}
@@ -729,9 +733,9 @@ const Content: Page = () => {
                 inset: 0,
                 borderRadius: '50%',
                 boxSizing: 'border-box',
-                background: s.state === 'pending' ? BG : running ? ACCENT : '#8B8B93',
-                border: s.state === 'pending' ? '2px solid #4A4A50' : 'none',
-                boxShadow: running ? `0 0 0 6px rgba(255,99,99,0.18), 0 0 24px ${ACCENT}` : 'none',
+                background: s.state === 'pending' ? BG : running ? ACCENT : MUTED,
+                border: s.state === 'pending' ? '2px solid #CFC5B9' : 'none',
+                boxShadow: running ? '0 0 0 6px rgba(255,99,99,0.2), 0 4px 14px rgba(255,99,99,0.5)' : 'none',
               }}
             />
           </div>
@@ -745,7 +749,7 @@ const Content: Page = () => {
             ...abs(stageX(i) + STAGE_W / 2, nodeY + 14),
             width: 1,
             height: 452 - nodeY - 14,
-            background: s.state === 'running' ? 'rgba(255,99,99,0.5)' : '#2A2A2D',
+            background: s.state === 'running' ? 'rgba(255,99,99,0.6)' : '#D9D0C5',
           }}
         />
       ))}
@@ -760,9 +764,9 @@ const Content: Page = () => {
           height: 104,
           boxSizing: 'border-box',
           borderRadius: 18,
-          background: 'rgba(24,24,26,0.85)',
+          background: SURFACE,
           border: `1px solid ${BORDER}`,
-          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
+          boxShadow: '0 18px 44px rgba(122,62,40,0.08), 0 2px 4px rgba(28,25,23,0.04)',
           display: 'flex',
           alignItems: 'center',
           animation: enter(live, 600),
@@ -790,7 +794,7 @@ const Content: Page = () => {
                 {k}
               </Kbd>
             ))}
-            <span style={{ fontSize: 26, color: '#D4D4D8', marginLeft: 12 }}>{h.label}</span>
+            <span style={{ fontSize: 26, color: '#3F3A36', marginLeft: 12 }}>{h.label}</span>
           </div>
         ))}
       </div>
@@ -851,12 +855,12 @@ const Closer: Page = () => {
             gap: 22,
             padding: '18px 18px 18px 30px',
             borderRadius: 14,
-            background: SURFACE,
-            border: `1px solid ${BORDER}`,
-            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 20px 60px rgba(0,0,0,0.5)',
+            background: INK,
+            border: '1px solid #2E2A27',
+            boxShadow: '0 24px 60px rgba(122,62,40,0.20), 0 6px 16px rgba(28,25,23,0.12)',
             fontFamily: MONO,
             fontSize: 26,
-            color: TEXT,
+            color: '#F5F5F4',
           }}
         >
           <span>
@@ -865,11 +869,11 @@ const Closer: Page = () => {
           <span
             style={{
               fontSize: 20,
-              color: BODY,
+              color: '#D6D3D1',
               padding: '6px 14px',
               borderRadius: 8,
-              background: SURFACE_HI,
-              border: `1px solid ${BORDER}`,
+              background: '#2E2A27',
+              border: '1px solid #3A3532',
             }}
           >
             复制

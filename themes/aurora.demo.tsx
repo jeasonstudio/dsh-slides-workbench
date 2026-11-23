@@ -4,7 +4,7 @@ import type { CSSProperties, ReactNode } from 'react';
 const styles = `
 @keyframes au-rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes au-fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes au-glow { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+@keyframes au-glow { 0%, 100% { opacity: 0.75; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1.04); } }
 @keyframes au-flow { from { stroke-dashoffset: 48; } to { stroke-dashoffset: 0; } }
 @keyframes au-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
 `;
@@ -15,17 +15,27 @@ const SANS =
 const MONO = '"SF Mono", SFMono-Regular, Menlo, Consolas, "PingFang SC", "Microsoft YaHei", monospace';
 
 const C = {
-  bg: '#09090B',
-  surface: '#111114',
-  surfaceHi: '#18181C',
-  line: 'rgba(255,255,255,0.10)',
-  text: '#FAFAFA',
-  body: '#BDBDC6',
-  meta: '#A1A1AA',
-  faint: '#52525B',
-  accent: '#A78BFA',
-  accentHi: '#C4B5FD',
-  accentSoft: 'rgba(167,139,250,0.14)',
+  bg: '#FAF9FE',
+  surface: '#F6F4FC',
+  surfaceHi: '#FFFFFF',
+  line: 'rgba(24,24,27,0.09)',
+  text: '#18181B',
+  body: '#3F3F46',
+  meta: '#5C5C66',
+  faint: '#A1A1AA',
+  accent: '#7C3AED',
+  accentHi: '#6D28D9',
+  accentSoft: 'rgba(124,58,237,0.10)',
+  fieldViolet: '#B9A2FF',
+  fieldBlue: '#9CC4FF',
+  fieldPink: '#FBB6E0',
+  ink: '#111116',
+  inkHi: '#1E1C28',
+  inkText: '#FAFAFA',
+  inkBody: '#C9C9D1',
+  inkMeta: '#A1A1AA',
+  inkAccent: '#C4B5FD',
+  inkSoft: 'rgba(167,139,250,0.20)',
 };
 
 const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
@@ -48,14 +58,14 @@ const pageBase: CSSProperties = {
   overflow: 'hidden',
 };
 
-// 点阵纹理：从光晕处向四周淡出
+// 点阵纹理：淡墨紫色小点，从色场处向四周淡出
 const DotGrid = ({ x = '50%', y = '40%' }: { x?: string; y?: string }) => (
   <div
     aria-hidden
     style={{
       position: 'absolute',
       inset: 0,
-      backgroundImage: 'radial-gradient(rgba(255,255,255,0.16) 1.2px, transparent 1.2px)',
+      backgroundImage: 'radial-gradient(rgba(76,29,149,0.18) 1.2px, transparent 1.2px)',
       backgroundSize: '32px 32px',
       maskImage: `radial-gradient(ellipse 60% 70% at ${x} ${y}, #000 0%, transparent 100%)`,
       WebkitMaskImage: `radial-gradient(ellipse 60% 70% at ${x} ${y}, #000 0%, transparent 100%)`,
@@ -64,11 +74,12 @@ const DotGrid = ({ x = '50%', y = '40%' }: { x?: string; y?: string }) => (
   />
 );
 
+// 极光色场：紫 / 蓝 / 粉三团柔光叠成的网格渐变，放在主体背后
 const Glow = ({
   x = '50%',
   y = '50%',
   size = 1100,
-  opacity = 0.32,
+  opacity = 0.85,
   live = false,
 }: {
   x?: string;
@@ -84,18 +95,18 @@ const Glow = ({
       left: x,
       top: y,
       width: size,
-      height: size,
+      height: size * 0.8,
       transform: 'translate(-50%, -50%)',
-      background: 'radial-gradient(circle, rgba(139,92,246,0.9) 0%, rgba(124,58,237,0.35) 30%, transparent 65%)',
+      background: `radial-gradient(closest-side at 34% 42%, ${C.fieldViolet}, transparent), radial-gradient(closest-side at 70% 34%, ${C.fieldBlue}, transparent), radial-gradient(closest-side at 58% 72%, ${C.fieldPink}, transparent)`,
       opacity,
-      filter: 'blur(60px)',
+      filter: 'blur(48px)',
       pointerEvents: 'none',
-      animation: live ? 'au-glow 5s ease-in-out infinite' : undefined,
+      animation: live ? 'au-glow 6s ease-in-out infinite' : undefined,
     }}
   />
 );
 
-// 渐变描边卡片：上亮下暗的 1px 边 + 顶部内高光
+// 白色玻璃卡片：渐变描边 + 顶部内高光 + 带紫调的柔和投影
 const Panel = ({
   children,
   style,
@@ -110,12 +121,14 @@ const Panel = ({
       position: 'relative',
       borderRadius: 20,
       border: '1px solid transparent',
-      background: `linear-gradient(180deg, ${C.surfaceHi}, ${C.surface}) padding-box, linear-gradient(180deg, ${
-        glow ? 'rgba(196,181,253,0.55)' : 'rgba(255,255,255,0.18)'
-      }, rgba(255,255,255,0.05) 60%) border-box`,
+      background: `linear-gradient(180deg, ${C.surfaceHi}, ${C.surface}) padding-box, ${
+        glow
+          ? 'linear-gradient(135deg, #A78BFA, #93C5FD 50%, #F9A8D4) border-box'
+          : 'linear-gradient(160deg, rgba(124,58,237,0.28), rgba(24,24,27,0.08) 45%, rgba(24,24,27,0.10)) border-box'
+      }`,
       boxShadow: glow
-        ? 'inset 0 1px 0 rgba(255,255,255,0.08), 0 0 80px rgba(139,92,246,0.18), 0 30px 80px rgba(0,0,0,0.5)'
-        : 'inset 0 1px 0 rgba(255,255,255,0.06), 0 30px 80px rgba(0,0,0,0.45)',
+        ? 'inset 0 1px 0 #FFFFFF, 0 2px 6px rgba(24,24,27,0.04), 0 36px 80px -24px rgba(124,58,237,0.38)'
+        : 'inset 0 1px 0 #FFFFFF, 0 1px 3px rgba(24,24,27,0.05), 0 24px 60px -24px rgba(76,29,149,0.22)',
       overflow: 'hidden',
       ...style,
     }}
@@ -134,7 +147,7 @@ const Title = ({ children, style }: { children: ReactNode; style?: CSSProperties
       letterSpacing: '0.01em',
       margin: 0,
       color: C.text,
-      backgroundImage: 'linear-gradient(180deg, #FFFFFF 35%, #B9B4D6 100%)',
+      backgroundImage: 'linear-gradient(180deg, #18181B 30%, #5B21B6 100%)',
       WebkitBackgroundClip: 'text',
       backgroundClip: 'text',
       WebkitTextFillColor: 'transparent',
@@ -170,8 +183,9 @@ const Eyebrow = ({ children, style }: { children: ReactNode; style?: CSSProperti
       gap: 12,
       padding: '10px 20px',
       borderRadius: 999,
-      border: '1px solid rgba(167,139,250,0.35)',
-      background: 'rgba(167,139,250,0.08)',
+      border: '1px solid rgba(124,58,237,0.30)',
+      background: 'rgba(255,255,255,0.75)',
+      boxShadow: '0 6px 20px -8px rgba(124,58,237,0.35)',
       fontFamily: MONO,
       fontSize: 20,
       letterSpacing: '0.12em',
@@ -181,7 +195,13 @@ const Eyebrow = ({ children, style }: { children: ReactNode; style?: CSSProperti
   >
     <span
       aria-hidden
-      style={{ width: 8, height: 8, borderRadius: '50%', background: C.accent, boxShadow: `0 0 12px ${C.accent}` }}
+      style={{
+        width: 8,
+        height: 8,
+        borderRadius: '50%',
+        background: C.accent,
+        boxShadow: '0 0 0 4px rgba(124,58,237,0.16)',
+      }}
     />
     {children}
   </div>
@@ -206,7 +226,7 @@ const Footer = ({ path = '/docs' }: { path?: string }) => {
       }}
     >
       <span>
-        <span style={{ color: C.accent }}>aurora</span> {path}
+        <span style={{ color: C.accent, fontWeight: 600 }}>aurora</span> {path}
       </span>
       <span>
         {String(current).padStart(2, '0')} <span style={{ color: C.faint }}>/ {String(total).padStart(2, '0')}</span>
@@ -215,17 +235,29 @@ const Footer = ({ path = '/docs' }: { path?: string }) => {
   );
 };
 
-// 产品窗口：带三个圆点的标题栏，内容区放终端 / 代码
+// 产品窗口：全页唯一的深色元素，60 px 标题栏 + 三个圆点，渐变描边 + 紫色投影
 const Window = ({ title, children, style }: { title: string; children: ReactNode; style?: CSSProperties }) => (
-  <Panel glow style={style}>
+  <div
+    style={{
+      position: 'relative',
+      borderRadius: 20,
+      border: '1px solid transparent',
+      background: `linear-gradient(180deg, ${C.inkHi}, ${C.ink}) padding-box, linear-gradient(135deg, rgba(196,181,253,0.9), rgba(255,255,255,0.10) 45%, rgba(249,168,212,0.55)) border-box`,
+      boxShadow:
+        'inset 0 1px 0 rgba(255,255,255,0.08), 0 12px 24px -8px rgba(17,17,22,0.25), 0 48px 100px -28px rgba(91,33,182,0.55)',
+      overflow: 'hidden',
+      color: C.inkText,
+      ...style,
+    }}
+  >
     <div
       style={{
         height: 60,
         display: 'flex',
         alignItems: 'center',
         padding: '0 24px',
-        borderBottom: `1px solid ${C.line}`,
-        background: 'rgba(255,255,255,0.02)',
+        borderBottom: '1px solid rgba(255,255,255,0.10)',
+        background: 'rgba(255,255,255,0.03)',
         position: 'relative',
       }}
     >
@@ -242,14 +274,14 @@ const Window = ({ title, children, style }: { title: string; children: ReactNode
           textAlign: 'center',
           fontFamily: MONO,
           fontSize: 20,
-          color: C.meta,
+          color: C.inkMeta,
         }}
       >
         {title}
       </span>
     </div>
     {children}
-  </Panel>
+  </div>
 );
 
 /* ---------------- 封面：左文案 + 右侧终端窗口 ---------------- */
@@ -269,8 +301,8 @@ const Cover: Page = () => {
   return (
     <div style={{ ...pageBase, flexDirection: 'row', alignItems: 'center', gap: 72 }}>
       <style>{styles}</style>
-      <DotGrid x="76%" y="45%" />
-      <Glow x="78%" y="30%" size={1300} live={live} />
+      <DotGrid x="30%" y="45%" />
+      <Glow x="74%" y="46%" size={1500} live={live} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 40, position: 'relative', ...rise(live) }}>
         <Eyebrow>版本发布 · v3.0</Eyebrow>
         <Title>
@@ -329,12 +361,12 @@ const Cover: Page = () => {
                 }}
               >
                 <span>
-                  {l.kind === 'cmd' && <span style={{ color: C.accent }}>$ </span>}
-                  {l.kind === 'ok' && <span style={{ color: C.accent }}>✓ </span>}
-                  {l.kind === 'link' && <span style={{ color: C.accent }}>→ </span>}
+                  {l.kind === 'cmd' && <span style={{ color: C.inkAccent }}>$ </span>}
+                  {l.kind === 'ok' && <span style={{ color: C.inkAccent }}>✓ </span>}
+                  {l.kind === 'link' && <span style={{ color: C.inkAccent }}>→ </span>}
                   <span
                     style={{
-                      color: l.kind === 'cmd' ? C.text : l.kind === 'link' ? C.accentHi : C.body,
+                      color: l.kind === 'cmd' ? C.inkText : l.kind === 'link' ? C.inkAccent : C.inkBody,
                       paddingLeft: l.kind === 'out' ? 30 : 0,
                     }}
                   >
@@ -348,20 +380,21 @@ const Cover: Page = () => {
                         height: 30,
                         marginLeft: 12,
                         verticalAlign: -5,
-                        background: C.text,
+                        background: C.inkText,
                         animation: live ? 'au-blink 1.1s step-end infinite' : undefined,
                       }}
                     />
                   )}
                 </span>
-                {l.value && <span style={{ color: l.kind === 'ok' ? C.text : C.meta }}>{l.value}</span>}
+                {l.value && <span style={{ color: l.kind === 'ok' ? C.inkText : C.inkMeta }}>{l.value}</span>}
               </div>
             ))}
           </div>
         </Window>
 
-        {/* 浮在窗口左下角的指标小卡，制造前后层次 */}
+        {/* 浮在窗口左下角的白色指标小卡，压在深色窗口上制造前后层次 */}
         <Panel
+          glow
           style={{
             position: 'absolute',
             left: -64,
@@ -377,7 +410,7 @@ const Cover: Page = () => {
             <svg width="120" height="48" viewBox="0 0 120 48" aria-hidden>
               <defs>
                 <linearGradient id="au-spark" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor={C.accent} stopOpacity="0.35" />
+                  <stop offset="0%" stopColor={C.accent} stopOpacity="0.28" />
                   <stop offset="100%" stopColor={C.accent} stopOpacity="0" />
                 </linearGradient>
               </defs>
@@ -419,26 +452,34 @@ const Node = ({ x, y, w, h, title, sub, tone }: NodeProps) => (
       padding: '0 22px',
       background:
         tone === 'hero'
-          ? 'linear-gradient(180deg, rgba(167,139,250,0.22), rgba(167,139,250,0.06))'
+          ? 'linear-gradient(135deg, #6D28D9, #4F46E5 60%, #7C3AED)'
           : tone === 'idle'
-            ? 'transparent'
+            ? 'rgba(255,255,255,0.5)'
             : C.surfaceHi,
       border:
         tone === 'hero'
-          ? '1px solid rgba(196,181,253,0.7)'
+          ? '1px solid rgba(255,255,255,0.35)'
           : tone === 'idle'
-            ? '1px dashed rgba(255,255,255,0.22)'
-            : '1px solid rgba(255,255,255,0.14)',
+            ? '1px dashed rgba(24,24,27,0.28)'
+            : '1px solid rgba(24,24,27,0.12)',
       boxShadow:
         tone === 'hero'
-          ? '0 0 60px rgba(139,92,246,0.45), inset 0 1px 0 rgba(255,255,255,0.15)'
-          : 'inset 0 1px 0 rgba(255,255,255,0.06)',
+          ? 'inset 0 1px 0 rgba(255,255,255,0.3), 0 0 0 8px rgba(124,58,237,0.10), 0 24px 50px -12px rgba(124,58,237,0.55)'
+          : tone === 'idle'
+            ? 'none'
+            : '0 1px 2px rgba(24,24,27,0.05), 0 10px 24px -12px rgba(76,29,149,0.20)',
     }}
   >
-    <span style={{ fontSize: tone === 'hero' ? 30 : 26, fontWeight: 600, color: tone === 'idle' ? C.meta : C.text }}>
+    <span
+      style={{
+        fontSize: tone === 'hero' ? 30 : 26,
+        fontWeight: 600,
+        color: tone === 'hero' ? '#FFFFFF' : tone === 'idle' ? C.meta : C.text,
+      }}
+    >
       {title}
     </span>
-    <span style={{ fontFamily: MONO, fontSize: 20, color: tone === 'hero' ? C.accentHi : C.meta }}>{sub}</span>
+    <span style={{ fontFamily: MONO, fontSize: 20, color: tone === 'hero' ? '#EDE9FE' : C.meta }}>{sub}</span>
   </div>
 );
 
@@ -455,7 +496,7 @@ const Content: Page = () => {
   return (
     <div style={{ ...pageBase, gap: 48 }}>
       <style>{styles}</style>
-      <Glow x="36%" y="62%" size={1000} opacity={0.28} live={live} />
+      <Glow x="38%" y="66%" size={1300} opacity={0.75} live={live} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24, position: 'relative', ...rise(live) }}>
         <Eyebrow>架构 · 运行时</Eyebrow>
         <Heading>一次请求，在 v3 里这样走完。</Heading>
@@ -463,14 +504,14 @@ const Content: Page = () => {
 
       <div style={{ display: 'flex', gap: 32, position: 'relative' }}>
         {/* 架构示意图 */}
-        <Panel style={{ width: 1100, height: 620, flexShrink: 0, ...rise(live, 120) }}>
+        <Panel glow style={{ width: 1100, height: 620, flexShrink: 0, ...rise(live, 120) }}>
           <div
             aria-hidden
             style={{
               position: 'absolute',
               inset: 0,
               backgroundImage:
-                'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)',
+                'linear-gradient(rgba(76,29,149,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(76,29,149,0.07) 1px, transparent 1px)',
               backgroundSize: '40px 40px',
               maskImage: 'radial-gradient(ellipse 70% 70% at 55% 55%, #000 30%, transparent 100%)',
               WebkitMaskImage: 'radial-gradient(ellipse 70% 70% at 55% 55%, #000 30%, transparent 100%)',
@@ -511,7 +552,7 @@ const Content: Page = () => {
                 'M770 278 C 805 278, 805 444, 840 444',
               ].map((d, i) => (
                 <g key={d}>
-                  <path d={d} fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="2" />
+                  <path d={d} fill="none" stroke="rgba(24,24,27,0.16)" strokeWidth="2" />
                   {i !== 4 && (
                     <path
                       d={d}
@@ -548,7 +589,7 @@ const Content: Page = () => {
                 color: C.meta,
               }}
             >
-              <span style={{ color: C.accentHi }}>+</span> 预热池让新 Worker 免冷启动，直接接流量
+              <span style={{ color: C.accent }}>+</span> 预热池让新 Worker 免冷启动，直接接流量
             </div>
           </div>
         </Panel>
@@ -584,7 +625,7 @@ const Content: Page = () => {
   );
 };
 
-/* ---------------- 结尾页：居中 + 升级 diff 卡 + 地平线光弧 ---------------- */
+/* ---------------- 结尾页：居中标题 + 代码 diff ---------------- */
 
 const diff: { no: string; sign: ' ' | '-' | '+'; code: string; indent?: boolean }[] = [
   { no: '12', sign: ' ', code: '"dependencies": {' },
@@ -599,7 +640,8 @@ const Closer: Page = () => {
     <div style={{ ...pageBase, alignItems: 'center', paddingTop: 80 }}>
       <style>{styles}</style>
       <DotGrid x="50%" y="30%" />
-      {/* 地平线光弧：一个巨大的黑色椭圆，顶边发紫光 */}
+      <Glow x="50%" y="58%" size={1500} opacity={0.6} live={live} />
+      {/* 晨光地平线：一个巨大的浅色椭圆，顶边紫色细线，向上投紫 / 蓝 / 粉三层彩色柔光 */}
       <div
         aria-hidden
         style={{
@@ -611,8 +653,9 @@ const Closer: Page = () => {
           transform: 'translateX(-50%)',
           borderRadius: '50%',
           background: C.bg,
-          borderTop: '2px solid rgba(196,181,253,0.85)',
-          boxShadow: '0 -24px 80px rgba(139,92,246,0.55), 0 -120px 240px rgba(124,58,237,0.35)',
+          borderTop: '2px solid rgba(124,58,237,0.65)',
+          boxShadow:
+            '0 -16px 50px rgba(167,139,250,0.75), 0 -80px 160px rgba(147,197,253,0.6), 0 -180px 280px rgba(249,168,212,0.5)',
           ...(live ? { animation: 'au-fade 1.2s ease-out both' } : {}),
         }}
       />
@@ -642,17 +685,17 @@ const Closer: Page = () => {
               style={{
                 display: 'flex',
                 padding: '0 32px',
-                background: l.sign === '+' ? C.accentSoft : l.sign === '-' ? 'rgba(255,255,255,0.03)' : 'transparent',
-                boxShadow: l.sign === '+' ? `inset 3px 0 0 ${C.accent}` : undefined,
+                background: l.sign === '+' ? C.inkSoft : l.sign === '-' ? 'rgba(255,255,255,0.03)' : 'transparent',
+                boxShadow: l.sign === '+' ? `inset 3px 0 0 ${C.inkAccent}` : undefined,
               }}
             >
-              <span style={{ width: 56, color: C.faint }}>{l.no}</span>
-              <span style={{ width: 36, color: l.sign === '+' ? C.accent : C.meta }}>{l.sign}</span>
+              <span style={{ width: 56, color: C.inkMeta, opacity: 0.6 }}>{l.no}</span>
+              <span style={{ width: 36, color: l.sign === '+' ? C.inkAccent : C.inkMeta }}>{l.sign}</span>
               <span
                 style={{
                   whiteSpace: 'pre',
                   marginLeft: l.indent ? 32 : 0,
-                  color: l.sign === '+' ? '#EDE9FE' : l.sign === '-' ? C.meta : C.body,
+                  color: l.sign === '+' ? '#EDE9FE' : l.sign === '-' ? C.inkMeta : C.inkBody,
                   textDecoration: l.sign === '-' ? 'line-through' : undefined,
                   textDecorationColor: 'rgba(161,161,170,0.6)',
                 }}
@@ -670,9 +713,10 @@ const Closer: Page = () => {
             padding: '16px 32px',
             borderRadius: 12,
             background: C.text,
-            color: C.bg,
+            color: '#FFFFFF',
             fontSize: 26,
             fontWeight: 600,
+            boxShadow: '0 14px 30px -10px rgba(76,29,149,0.45)',
           }}
         >
           阅读升级指南 →

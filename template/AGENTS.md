@@ -9,6 +9,7 @@
 - 不要改 `package.json`、`open-slide.config.ts`，也不要动别人的 deck。
 - 不要新增依赖，只能用 `react`、`@open-slide/core` 和标准 Web API。
 - 讲稿（speaker notes）写进 `index.tsx` 的 `notes` 导出，不要另建 markdown。
+- 默认用亮色背景（浅底深字）；只有用户明确要深色、或选用的主题是 `mode: dark` 时才用暗色。
 
 ## 在 DeepSeek Harness 里
 

@@ -7,14 +7,15 @@ const SANS =
 const MONO =
   '"SF Mono", SFMono-Regular, Menlo, Consolas, "PingFang SC", "Microsoft YaHei", monospace';
 
-const BG = '#000000';
-const TEXT = '#EDEDED';
-const BODY = '#A1A1A1';
-const MUTED = '#8A8A8A';
-const GRID = '#161616';
-const FRAME = '#2A2A2A';
-const MARK = '#4D4D4D';
+const BG = '#F4F3EF';
+const TEXT = '#0A0A0A';
+const BODY = '#3D3D3D';
+const MUTED = '#5E5E5E';
+const GRID = '#DCDAD3';
+const FRAME = '#B5B3AC';
+const MARK = '#8C8A84';
 const ACCENT = '#FF4F00';
+const DIM = '#9A9A9A';
 
 // 栅格：120 px 正方形模块，16 × 9。内容区 x 120–1800、y 120–960（14 列 × 7 行）
 const U = 120;
@@ -237,19 +238,26 @@ const Cover: Page = () => {
           4<tspan fill={ACCENT}>.</tspan>0
         </BigNumber>
       </div>
-      <div style={{ ...abs(840, 839, 960, 2), background: TEXT }} />
+      {/* 版本号下方：一整行实心墨块，基线正好压在它的顶边 */}
       <div
         style={{
-          ...abs(840, 860, 960),
+          ...abs(840, 840, 960, 120),
+          boxSizing: 'border-box',
+          background: TEXT,
           display: 'flex',
+          alignItems: 'center',
           justifyContent: 'space-between',
+          padding: '0 32px',
           fontFamily: MONO,
-          fontSize: 20,
-          color: MUTED,
+          fontSize: 22,
+          color: DIM,
+          ...enter(live, 200, 'mg-fade', 600),
         }}
       >
-        <span>v3.2 → v4.0</span>
-        <span>2026.11.16 正式可用</span>
+        <span>
+          v3.2 → <span style={{ color: BG }}>v4.0</span>
+        </span>
+        <span style={{ color: BG }}>2026.11.16 正式可用</span>
       </div>
 
       <Footer n={1} total={TOTAL} />
@@ -318,7 +326,7 @@ const Data: Page = () => {
       {/* 底部：对比刻度尺 */}
       <div style={{ ...abs(U, 776), fontFamily: MONO, fontSize: 20, color: MUTED }}>P99 冷启动 / 毫秒</div>
       {[
-        { ms: 340, y: 820, color: '#5C5C5C', label: '340ms　v3.2' },
+        { ms: 340, y: 820, color: '#A8A69F', label: '340ms　v3.2' },
         { ms: 47, y: 848, color: ACCENT, label: '47ms　v4.0' },
       ].map((b, i) => (
         <div key={b.label}>
@@ -413,8 +421,7 @@ const Closer: Page = () => {
         style={{
           ...abs(U, 540, 1680, 120),
           boxSizing: 'border-box',
-          border: `1px solid ${TEXT}`,
-          background: '#0A0A0A',
+          background: TEXT,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -423,8 +430,8 @@ const Closer: Page = () => {
           ...enter(live, 240),
         }}
       >
-        <span style={{ fontSize: 48, color: TEXT, display: 'flex', alignItems: 'center' }}>
-          <span style={{ color: MUTED, marginRight: 28 }}>$</span>
+        <span style={{ fontSize: 48, color: BG, display: 'flex', alignItems: 'center' }}>
+          <span style={{ color: DIM, marginRight: 28 }}>$</span>
           atlas deploy --prod
           <span
             style={{
@@ -437,7 +444,7 @@ const Closer: Page = () => {
             }}
           />
         </span>
-        <span style={{ fontSize: 22, color: MUTED }}>↵ 回车即上线</span>
+        <span style={{ fontSize: 22, color: DIM }}>↵ 回车即上线</span>
       </div>
 
       {/* 四步：每格 3.5 个模块宽 */}

@@ -7,7 +7,7 @@ import {
 import type { CSSProperties, ReactNode } from 'react';
 
 export const design: DesignSystem = {
-  palette: { bg: '#4B1DFF', text: '#FFFFFF', accent: '#D8FF2E' },
+  palette: { bg: '#F6F4FF', text: '#0B0A14', accent: '#4B1DFF' },
   fonts: {
     display:
       '"Avenir Next Condensed", "DIN Condensed", "Arial Narrow", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif',
@@ -18,10 +18,14 @@ export const design: DesignSystem = {
 };
 
 const INK = '#0B0A14';
+const VOLT = '#D8FF2E';
 const CORAL = '#FF4A3D';
 const DEEP = '#2A0FA3';
+const SLATE = '#4D4868';
 const LAV = '#D3CAFF';
+const FOAM = '#BBAEFF';
 const WHITE_A = (a: number) => `rgba(255,255,255,${a})`;
+const UV_A = (a: number) => `rgba(75,29,255,${a})`;
 
 const THEME_ID = 'theme-aero';
 const STYLE_ID = `osd-styles-${THEME_ID}`;
@@ -57,24 +61,18 @@ const BAND_CLIP = `polygon(${BAND_PCT}% 0, 100% 0, ${(100 - Number(BAND_PCT)).to
 
 const SNAP = 'cubic-bezier(0.16, 1, 0.3, 1)';
 
-type Tone = 'uv' | 'volt' | 'ink';
+type Tone = 'paper' | 'uv' | 'volt';
 
 const TONES: Record<Tone, { bg: string; fg: string; dim: string; hi: string; hiFg: string }> = {
-  uv: { bg: 'var(--osd-bg)', fg: 'var(--osd-text)', dim: LAV, hi: 'var(--osd-accent)', hiFg: INK },
-  volt: {
-    bg: 'var(--osd-accent)',
-    fg: INK,
-    dim: 'rgba(11,10,20,0.66)',
-    hi: INK,
-    hiFg: 'var(--osd-accent)',
-  },
-  ink: {
-    bg: INK,
+  paper: {
+    bg: 'var(--osd-bg)',
     fg: 'var(--osd-text)',
-    dim: 'rgba(255,255,255,0.6)',
+    dim: SLATE,
     hi: 'var(--osd-accent)',
-    hiFg: INK,
+    hiFg: VOLT,
   },
+  uv: { bg: 'var(--osd-accent)', fg: '#FFFFFF', dim: LAV, hi: VOLT, hiFg: INK },
+  volt: { bg: VOLT, fg: INK, dim: 'rgba(11,10,20,0.72)', hi: INK, hiFg: VOLT },
 };
 
 // 中文标题保持正体；斜体只给英文和数字（LEAN / NUM），中文单位用 UNIT 扶正
@@ -201,7 +199,7 @@ const Footer = ({
 };
 
 const Stage = ({
-  tone = 'uv',
+  tone = 'paper',
   footer = true,
   children,
 }: {
@@ -229,7 +227,7 @@ const Stage = ({
 const Kicker = ({
   tag,
   children,
-  tone = 'uv',
+  tone = 'paper',
   x = 120,
   y = 104,
 }: {
@@ -341,7 +339,17 @@ const Streak = ({
   </div>
 );
 
-const VoltBand = ({ x, y, w }: { x: number; y: number; w: number }) => (
+const VoltBand = ({
+  x,
+  y,
+  w,
+  color = 'var(--osd-accent)',
+}: {
+  x: number;
+  y: number;
+  w: number;
+  color?: string;
+}) => (
   <div
     style={{
       position: 'absolute',
@@ -349,7 +357,7 @@ const VoltBand = ({ x, y, w }: { x: number; y: number; w: number }) => (
       top: y,
       width: w,
       height: w / BAND_RATIO,
-      background: 'var(--osd-accent)',
+      background: color,
       clipPath: BAND_CLIP,
     }}
   />
@@ -435,25 +443,31 @@ const Chip = ({
   </span>
 );
 
-const SpecChip = ({ children }: { children: ReactNode }) => (
+const SpecChip = ({
+  children,
+  color = 'var(--osd-accent)',
+}: {
+  children: ReactNode;
+  color?: string;
+}) => (
   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 22 }}>
-    <span style={{ width: 4, height: 22, background: 'var(--osd-accent)', transform: SKEW }} />
+    <span style={{ width: 5, height: 24, background: color, transform: SKEW }} />
     {children}
   </span>
 );
 
 const COVER_STREAKS = [
-  { y: 152, h: 6, tile: 560, dash: 300, color: DEEP, dur: 2.6, shift: 0 },
-  { y: 184, h: 2, tile: 380, dash: 140, color: WHITE_A(0.3), dur: 1.7, shift: -90 },
-  { y: 236, h: 16, tile: 920, dash: 560, color: DEEP, dur: 3.4, shift: -300 },
-  { y: 310, h: 3, tile: 460, dash: 180, color: WHITE_A(0.22), dur: 2.1, shift: -200 },
-  { y: 372, h: 28, tile: 1180, dash: 720, color: DEEP, dur: 4.2, shift: -520 },
-  { y: 462, h: 3, tile: 340, dash: 120, color: WHITE_A(0.3), dur: 1.5, shift: -40 },
-  { y: 512, h: 10, tile: 760, dash: 380, color: DEEP, dur: 3, shift: -610 },
-  { y: 590, h: 2, tile: 300, dash: 90, color: WHITE_A(0.36), dur: 1.3, shift: -150 },
-  { y: 628, h: 20, tile: 980, dash: 520, color: DEEP, dur: 3.8, shift: -120 },
+  { y: 132, h: 6, tile: 560, dash: 300, color: LAV, dur: 2.6, shift: 0 },
+  { y: 172, h: 2, tile: 380, dash: 140, color: UV_A(0.4), dur: 1.7, shift: -90 },
+  { y: 236, h: 16, tile: 920, dash: 560, color: LAV, dur: 3.4, shift: -300 },
+  { y: 310, h: 3, tile: 460, dash: 180, color: UV_A(0.32), dur: 2.1, shift: -200 },
+  { y: 372, h: 28, tile: 1180, dash: 720, color: LAV, dur: 4.2, shift: -520 },
+  { y: 462, h: 3, tile: 340, dash: 120, color: UV_A(0.4), dur: 1.5, shift: -40 },
+  { y: 512, h: 10, tile: 760, dash: 380, color: FOAM, dur: 3, shift: -610 },
+  { y: 590, h: 2, tile: 300, dash: 90, color: UV_A(0.45), dur: 1.3, shift: -150 },
+  { y: 760, h: 20, tile: 980, dash: 520, color: DEEP, dur: 3.8, shift: -120 },
   { y: 880, h: 8, tile: 640, dash: 260, color: DEEP, dur: 2.4, shift: -330 },
-  { y: 958, h: 14, tile: 840, dash: 420, color: DEEP, dur: 3.2, shift: -700 },
+  { y: 1000, h: 14, tile: 840, dash: 420, color: DEEP, dur: 3.2, shift: -700 },
 ];
 
 const Cover: Page = () => {
@@ -462,19 +476,20 @@ const Cover: Page = () => {
     live ? { animation: `ae-in 0.8s ${SNAP} ${delay}s both` } : {};
   return (
     <Stage footer={false}>
+      <div style={abs(0, 652, { width: 1920, height: 428, background: 'var(--osd-accent)' })} />
       {COVER_STREAKS.map((s) => (
         <Streak key={s.y} {...s} live={live} />
       ))}
 
-      <Wordmark x={120} y={92} />
-      <div style={abs(1100, 104, { ...LABEL, width: 700, textAlign: 'right', color: LAV })}>
+      <Wordmark x={120} y={72} />
+      <div style={abs(1100, 84, { ...LABEL, width: 700, textAlign: 'right', color: SLATE })}>
         合作伙伴与管理层
       </div>
 
       <h1
         style={{
           ...DISPLAY,
-          ...abs(96, 156),
+          ...abs(96, 136),
           fontSize: 'var(--osd-size-hero)',
           lineHeight: 1,
           letterSpacing: '0.02em',
@@ -485,9 +500,9 @@ const Cover: Page = () => {
         开跑 <span style={{ ...NUM, color: 'var(--osd-accent)' }}>27</span>
       </h1>
 
-      <VoltBand x={60} y={700} w={1800} />
+      <VoltBand x={60} y={680} w={1800} color={VOLT} />
       <div
-        style={abs(196, 700, {
+        style={abs(196, 680, {
           height: 150,
           width: 1528,
           display: 'flex',
@@ -505,23 +520,25 @@ const Cover: Page = () => {
       </div>
 
       <div
-        style={abs(120, 920, {
+        style={abs(120, 928, {
           ...LABEL,
-          fontSize: 22,
+          fontSize: 24,
           display: 'flex',
           gap: 40,
-          color: 'var(--osd-text)',
+          color: '#FFFFFF',
           fontVariantNumeric: 'tabular-nums',
         })}
       >
         <span>4 次发售</span>
-        <SpecChip>6 座赛事城市</SpecChip>
-        <SpecChip>38 个市场</SpecChip>
-        <SpecChip>1 条产品线</SpecChip>
+        <SpecChip color={VOLT}>6 座赛事城市</SpecChip>
+        <SpecChip color={VOLT}>38 个市场</SpecChip>
+        <SpecChip color={VOLT}>1 条产品线</SpecChip>
       </div>
-      <div style={abs(1380, 896, { width: 420, textAlign: 'right' })}>
-        <div style={{ ...LABEL, fontSize: 17, color: LAV }}>开跑日</div>
-        <div style={{ ...NUM, fontSize: 64, fontWeight: 800, marginTop: 6 }}>09·04·27</div>
+      <div style={abs(1380, 890, { width: 420, textAlign: 'right' })}>
+        <div style={{ ...LABEL, fontSize: 18, color: LAV }}>开跑日</div>
+        <div style={{ ...NUM, fontSize: 72, fontWeight: 800, marginTop: 6, color: VOLT }}>
+          09·04·27
+        </div>
       </div>
     </Stage>
   );
@@ -535,8 +552,8 @@ const Content: Page = () => (
     </div>
 
     <div style={abs(120, 176)}>
-      <div style={{ ...NUM, fontSize: 300 }}>2.6×</div>
-      <p style={{ ...BODY, marginTop: 26, color: LAV, width: 560 }}>
+      <div style={{ ...NUM, fontSize: 300, color: 'var(--osd-accent)' }}>2.6×</div>
+      <p style={{ ...BODY, marginTop: 26, color: SLATE, width: 560 }}>
         三个赛季，品类规模翻了 2.6 倍。
       </p>
     </div>
@@ -545,20 +562,20 @@ const Content: Page = () => (
       <div style={{ ...NUM, fontSize: 300 }}>
         ¥130<span style={UNIT}>亿</span>
       </div>
-      <p style={{ ...BODY, marginTop: 26, color: LAV, width: 640 }}>
+      <p style={{ ...BODY, marginTop: 26, color: SLATE, width: 640 }}>
         本季零售规模，增速还在加快。
       </p>
     </div>
 
-    <div style={abs(120, 604, { ...LABEL, color: LAV })}>我们的品类份额</div>
+    <div style={abs(120, 604, { ...LABEL, color: SLATE })}>我们的品类份额</div>
 
     <div style={abs(120, 650, { height: 115, display: 'flex', alignItems: 'center' })}>
       <div>
         <div style={{ ...NUM, fontSize: 52, fontWeight: 800 }}>2026</div>
-        <div style={{ ...LABEL, fontSize: 15, color: LAV, marginTop: 4 }}>现在</div>
+        <div style={{ ...LABEL, fontSize: 17, color: SLATE, marginTop: 4 }}>现在</div>
       </div>
     </div>
-    <CutBar x={300} y={650} w={753} h={115} color={DEEP} />
+    <CutBar x={300} y={650} w={753} h={115} color={FOAM} />
     <div style={abs(1088, 650, { height: 115, display: 'flex', alignItems: 'center' })}>
       <span style={{ ...NUM, fontSize: 104 }}>6%</span>
     </div>
@@ -568,7 +585,7 @@ const Content: Page = () => (
         <div style={{ ...NUM, fontSize: 52, fontWeight: 800, color: 'var(--osd-accent)' }}>
           2027
         </div>
-        <div style={{ ...LABEL, fontSize: 15, color: LAV, marginTop: 4 }}>目标</div>
+        <div style={{ ...LABEL, fontSize: 17, color: SLATE, marginTop: 4 }}>目标</div>
       </div>
     </div>
     <VoltBand x={300} y={795} w={1380} />
@@ -579,11 +596,11 @@ const Content: Page = () => (
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        color: INK,
+        color: '#FFFFFF',
       })}
     >
-      <span style={{ ...LABEL, fontSize: 18, fontWeight: 700 }}>+5 个百分点 · 2027 年底</span>
-      <span style={{ ...NUM, fontSize: 104 }}>11%</span>
+      <span style={{ ...LABEL, fontSize: 20, fontWeight: 700 }}>+5 个百分点 · 2027 年底</span>
+      <span style={{ ...NUM, fontSize: 104, color: VOLT }}>11%</span>
     </div>
   </Stage>
 );
@@ -607,7 +624,7 @@ const StartNum = ({ n }: { n: number }) => (
       width: 120,
       textAlign: 'center',
       fontSize: 120,
-      color: n === 4 ? 'var(--osd-accent)' : WHITE_A(0.9),
+      color: n === 4 ? VOLT : WHITE_A(0.92),
     })}
   >
     {n}
@@ -622,20 +639,22 @@ const Closer: Page = () => {
     live ? { animation: `ae-in 0.8s ${SNAP} ${delay}s both` } : {};
   return (
     <Stage footer={false}>
+      <Streak y={150} h={10} tile={760} dash={380} color={LAV} dur={3} shift={-200} live={live} />
+      <Streak y={738} h={12} tile={920} dash={560} color={LAV} dur={3.4} shift={-300} live={live} />
       <Wordmark x={120} y={92} />
       <Title size={180} x={112} y={176} style={enter(0.05)}>
         起跑线上，
         <br />
-        不见不散。
+        <span style={{ color: 'var(--osd-accent)' }}>不见不散。</span>
       </Title>
       <div style={abs(120, 610, { ...enter(0.18) })}>
         <div style={{ ...DISPLAY, fontSize: 48, lineHeight: 1 }}>林嘉禾</div>
-        <div style={{ ...BODY, color: LAV, marginTop: 14 }}>
+        <div style={{ ...BODY, color: SLATE, marginTop: 14 }}>
           市场负责人 · linjiahe@example.com
         </div>
       </div>
       <div style={abs(1380, 610, { width: 420, textAlign: 'right' })}>
-        <div style={{ ...LABEL, fontSize: 17, color: LAV }}>开跑日</div>
+        <div style={{ ...LABEL, fontSize: 18, color: SLATE }}>开跑日</div>
         <div
           style={{
             ...NUM,
@@ -649,14 +668,15 @@ const Closer: Page = () => {
         </div>
       </div>
 
-      <div style={abs(0, 800, { width: 1920, height: 280, background: DEEP })} />
+      <div style={abs(0, 800, { width: 1920, height: 280, background: 'var(--osd-accent)' })} />
       {LANES.map((n) => (
         <StartLane key={n} i={n} />
       ))}
       {LANES.map((n) => (
         <StartNum key={n} n={n} />
       ))}
-      <div style={abs(-40, 770, { width: 2000, height: 34, background: 'var(--osd-accent)' })} />
+      <div style={abs(-40, 770, { width: 2000, height: 34, background: VOLT })} />
+      <div style={abs(-40, 770, { width: 2000, height: 6, background: INK })} />
     </Stage>
   );
 };

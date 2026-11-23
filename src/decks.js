@@ -262,8 +262,8 @@ const Cover: Page = () => (
     style={{
       width: '100%',
       height: '100%',
-      background: '#0b0d10',
-      color: '#f4f6f8',
+      background: '#f7f5f0',
+      color: '#1a1814',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
@@ -271,13 +271,13 @@ const Cover: Page = () => (
       boxSizing: 'border-box',
     }}
   >
-    <div style={{ fontSize: 22, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#7f8b99' }}>
+    <div style={{ fontSize: 22, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#8a847a' }}>
       DeepSeek Harness
     </div>
     <h1 style={{ margin: 0, fontSize: 136, lineHeight: 1.04, letterSpacing: '-0.04em', fontWeight: 600, maxWidth: 1560 }}>
       ${safe}
     </h1>
-    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 24, color: '#8b97a5' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 24, color: '#8a847a' }}>
       <span>让 AI 继续写下一页</span>
       <span>01</span>
     </div>

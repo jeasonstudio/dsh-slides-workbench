@@ -1,32 +1,44 @@
 ---
-name: 紫夜微光
-description: 深夜发布会风格：近黑画布配点阵纹理、紫色光晕、渐变描边的圆角卡片与产品窗口、等宽元信息，每页一个发光的视觉主体，适合版本发布与技术架构。
-mode: dark
+name: 紫晨微光
+description: 晨光发布会风格：近白画布配淡墨点阵、紫蓝粉极光色场、渐变描边的白色玻璃卡片与深色产品窗口、等宽元信息，每页一个被极光托起的视觉主体，适合版本发布与技术架构。
+mode: light
 ---
 
-# 紫夜微光
+# 紫晨微光
 
-改编自 open-slide 官方主题 Aurora（MIT），已汉化，只用系统字体，不加载任何外部字体、图片或其它外部资源。目标是 Linear / Vercel / Raycast 发布会那种精致的暗色 deck：**每页一个用 CSS / SVG 画出来的视觉主体**（终端窗口、架构图、代码 diff、指标卡），光晕和纹理都围着主体走。
+改编自 open-slide 官方主题 Aurora（MIT），已汉化，只用系统字体，不加载任何外部字体、图片或其它外部资源。目标是 Linear / Vercel / Stripe 发布会那种精致的浅色 deck：**每页一个用 CSS / SVG 画出来的视觉主体**（终端窗口、架构图、代码 diff、指标卡），极光色场和纹理都围着主体走。
 
 ## 配色
 
-代码里统一用 `C.xxx` 引用，不要散写色值。
+代码里统一用 `C.xxx` 引用，不要散写色值。浅色画布上发光不可见，所以「光」改成三样东西：主体背后的大面积极光色场（`Glow`）、渐变描边、带紫调的柔和投影。
 
 | 角色        | 色值                          | 用途                                                       |
 | ----------- | ----------------------------- | ---------------------------------------------------------- |
-| bg          | `#09090B`                     | 近黑画布                                                   |
-| surface     | `#111114`                     | 卡片底色（渐变的下端）                                     |
-| surfaceHi   | `#18181C`                     | 卡片底色（渐变的上端）、架构图普通节点                     |
-| line        | `rgba(255,255,255,0.10)`      | 卡片内分隔线、窗口标题栏下边线                             |
-| text        | `#FAFAFA`                     | 标题、大数字、命令、关键值                                 |
-| body        | `#BDBDC6`                     | 正文、副标题、卡片说明                                     |
-| meta        | `#A1A1AA`                     | 元信息：眉标以外的等宽标签、路径、页脚。**文字不能比它更暗** |
-| faint       | `#52525B`                     | 只用于装饰：行号、页码分母、休眠图例，不承载要读的内容     |
-| accent      | `#A78BFA`                     | 紫色：光晕、圆点、`$` `✓` 提示符、数据流线、sparkline      |
-| accentHi    | `#C4B5FD`                     | 浅紫：眉标文字、指标标签、高亮节点副标题、链接             |
-| accentSoft  | `rgba(167,139,250,0.14)`      | 低透明度紫色填充：diff 新增行、标签底                      |
+| bg          | `#FAF9FE`                     | 近白画布（带一丝紫调）                                     |
+| surface     | `#F6F4FC`                     | 卡片底色（渐变的下端）                                     |
+| surfaceHi   | `#FFFFFF`                     | 卡片底色（渐变的上端）、架构图普通节点                     |
+| line        | `rgba(24,24,27,0.09)`         | 卡片内分隔线、封面元信息上方分隔线                         |
+| text        | `#18181B`                     | 标题、大数字、命令、关键值                                 |
+| body        | `#3F3F46`                     | 正文、副标题、卡片说明（对 bg 10:1）                       |
+| meta        | `#5C5C66`                     | 元信息：眉标以外的等宽标签、路径、页脚。**文字不能比它更浅**（对 bg 6.3:1，压在极光色场上仍 ≥ 4.9:1） |
+| faint       | `#A1A1AA`                     | 只用于装饰：页码分母、休眠图例，不承载要读的内容           |
+| accent      | `#7C3AED`                     | 紫色：圆点、`+` 提示、数据流线、sparkline、页脚前缀        |
+| accentHi    | `#6D28D9`                     | 深紫：眉标文字、指标标签（对白 7:1）                       |
+| accentSoft  | `rgba(124,58,237,0.10)`       | 低透明度紫色填充：浅色区域里的标签底、高亮行               |
+| fieldViolet | `#B9A2FF`                     | 极光色场：紫（只进 `Glow`，不做文字色）                    |
+| fieldBlue   | `#9CC4FF`                     | 极光色场：蓝                                               |
+| fieldPink   | `#FBB6E0`                     | 极光色场：粉                                               |
+| ink         | `#111116`                     | 深色产品窗口底色（渐变的下端）                             |
+| inkHi       | `#1E1C28`                     | 深色产品窗口底色（渐变的上端）                             |
+| inkText     | `#FAFAFA`                     | 窗口内：命令、关键值、光标                                 |
+| inkBody     | `#C9C9D1`                     | 窗口内：输出、代码正文                                     |
+| inkMeta     | `#A1A1AA`                     | 窗口内：标题栏文字、次要数值、删除行。窗口内文字不能比它更暗 |
+| inkAccent   | `#C4B5FD`                     | 窗口内：`$` `✓` `→` 提示符、链接、diff 新增行左侧紫条      |
+| inkSoft     | `rgba(167,139,250,0.20)`      | 窗口内：diff 新增行底色                                    |
 
-只有一种强调色。不用红绿表示增删，diff 里删除行用划线 + `meta` 色，新增行用 `accentSoft` 底 + 左侧 3px 紫条。
+文字只有一种强调色（紫）。蓝和粉**只**出现在极光色场、渐变描边和地平线柔光里，不用来写字、不做图例。不用红绿表示增删，diff 里删除行用划线 + `inkMeta` 色，新增行用 `inkSoft` 底 + 左侧 3px `inkAccent` 紫条。
+
+深色只留给产品窗口（终端 / 代码），它是每页最重的一块，自然成为视觉主体；同一页不要再出现第二块深色面板。`ink*` 色只在 `Window` 里用，`text / body / meta` 只在浅色区域用，两套不要混。
 
 ## 字体
 
@@ -36,8 +48,8 @@ mode: dark
 - 字重：标题、大数字、按钮 600；正文 400。
 - 中文不用负字距、不用斜体；标题字距 `0.01em`。只有纯数字的大数字（`4.2×`、`92ms`）用 `-0.03em`。
 - 页面根节点设 `fontVariantNumeric: 'tabular-nums'`。
-- 字号（不要再往下压，黑底上小字会发闷）：
-  - 封面 / 结尾大标题：112 px，行高 1.15，**白到淡紫灰的竖向渐变字**（见 `Title`），每行不超过 7 个字。
+- 字号（不要再往下压，浅底上细小的灰字会发虚）：
+  - 封面 / 结尾大标题：112 px，行高 1.15，**墨黑到深紫的竖向渐变字**（见 `Title`），每行不超过 7 个字。
   - 页面标题：60 px，行高 1.2，一行不超过 18 个字。
   - 副标题 / 正文：30 px（封面、结尾），卡片说明 26 px，行高 1.5–1.6。**正文 ≥ 26 px。**
   - 终端 / 代码：26 px 等宽，行高 1.8。
@@ -47,14 +59,15 @@ mode: dark
 ## 版式
 
 - 画布 1920×1080，内边距左右 120 px、上下 100 px（结尾页上边 80）。页脚固定在底部 52 px。
-- 每页只有一个视觉主体，占画面 40%–60% 面积；文字区和主体之间要么左右分栏，要么上下堆叠，不要文字只占左上角、剩下一片空黑。
+- 每页只有一个视觉主体，占画面 40%–60% 面积；文字区和主体之间要么左右分栏，要么上下堆叠，不要文字只占左上角、剩下一片空白。
 - 三种页型各不相同，按需复用：
-  1. **封面（左右分栏）**：左列 = 眉标 + 大标题 + 两行副标题 + 一条分隔线下的三组元信息（日期 / 通道 / 兼容）；右列 820 px 宽的终端窗口，左下角压一张浮动指标小卡（`left: -64, bottom: -96`），制造前后层次。光晕放在窗口右上方。
-  2. **内容页（标题 + 主体 + 侧栏）**：上方眉标 + 60 px 标题；下方一行，左边 1100×620 的架构图卡（网格底纹，高亮节点发光），右边三张等高指标卡竖排。
-  3. **结尾页（居中）**：眉标 + 大标题 + 一句副标题居中，下面 960 px 宽的代码 diff 窗口，再下面一个白底按钮 + 等宽链接；底部一道紫色「地平线光弧」，页脚落在弧线下方的黑色里。
-- 面板：一律用 `Panel`（圆角 20、上亮下暗的 1px 渐变描边、顶部 1px 内高光、深色投影）。主角卡片加 `glow`，描边变紫并带一圈紫色外发光；同一页最多一个 `glow`。
-- 纹理：封面和结尾用 `DotGrid` 点阵，遮罩中心对准光晕；架构图卡内部用 40 px 线网格，同样用径向遮罩淡出边缘。纹理只是质感，透明度不要再调高。
-- 光晕：`Glow` 放在主体背后或旁边（封面右上、内容页高亮节点附近），和主体呼应，绝不压在大段文字后面。
+  1. **封面（左右分栏）**：左列 = 眉标 + 大标题 + 两行副标题 + 一条分隔线下的三组元信息（日期 / 通道 / 兼容）；右列 820 px 宽的深色终端窗口，左下角压一张白色浮动指标小卡（`left: -64, bottom: -96`，带 `glow`），白压黑制造前后层次。极光色场铺在窗口背后，比窗口大一圈。
+  2. **内容页（标题 + 主体 + 侧栏）**：上方眉标 + 60 px 标题；下方一行，左边 1100×620 的架构图卡（`glow`，网格底纹，高亮节点是实心紫靛渐变），右边三张等高白色指标卡竖排。极光色场放在架构图卡下方偏左，从卡片边缘透出来。
+  3. **结尾页（居中）**：眉标 + 大标题 + 一句副标题居中，下面 960 px 宽的深色代码 diff 窗口，再下面一个墨黑按钮 + 等宽链接；底部一道「晨光地平线」：浅色大弧，顶边紫线，向上透出紫 / 蓝 / 粉三层彩色柔光，页脚落在弧线下方的近白里。
+- 面板：浅色区域一律用 `Panel`（白色玻璃：白到淡紫灰的竖向底、1px 渐变描边、顶部 1px 白色内高光、带紫调的柔和投影）。主角卡片加 `glow`，描边变成紫→蓝→粉的极光渐变，投影更深更紫；同一页最多一个 `glow`。深色窗口用 `Window`，不要用 `Panel`。
+- 纹理：封面和结尾用 `DotGrid` 淡墨紫点阵，遮罩中心对准文字区或色场；架构图卡内部用 40 px 淡紫线网格，同样用径向遮罩淡出边缘。纹理只是质感，透明度不要再调高。
+- 极光色场：`Glow` 放在主体背后或旁边（封面窗口背后、内容页架构图下方、结尾页 diff 窗口背后），尺寸要比主体大，让色彩从主体四周溢出；绝不压在大段正文后面（正文要落在近白画布上）。
+- 投影：浅底上不用黑色大投影，统一用 `rgba(76,29,149,…)` / `rgba(124,58,237,…)` 紫调投影，负的 spread（`0 24px 60px -24px`）让影子收在卡片底下。
 - 中文三列 / 侧栏说明一行写完（≤ 17 个字）或用 `\n` 在逗号处手动断行并加 `whiteSpace: 'pre-line'`，避免末行只剩一两个字。
 - 等宽字体里中英混排宽度不稳定，终端 / 列表里「左文字、右数值」一律用 `display: flex; justifyContent: space-between`，不要靠空格对齐。
 
@@ -65,17 +78,17 @@ mode: dark
 - `styles`：关键帧，放进每页的 `<style>{styles}</style>`。
 - `C`：配色表。`rise(live, delay)`：进场动画，`live` 为 false 时返回空对象。
 - `pageBase`：页面底座。
-- `DotGrid`：点阵纹理，`x / y` 是遮罩中心（对准光晕）。
-- `Glow`：紫色光晕，`opacity` 默认 0.32，传 `live` 才会呼吸。
-- `Panel`：渐变描边卡片，`glow` 为主角卡。
-- `Title` / `Heading` / `Eyebrow` / `Footer`：大标题（渐变字）/ 页面标题 / 胶囊眉标（紫色描边 + 发光圆点）/ 页脚（`aurora` 紫色前缀 + 路径 + 页码）。
-- `Window`：产品窗口，60 px 标题栏 + 三个灰色圆点 + 居中等宽标题，自带 `glow`。
+- `DotGrid`：淡墨紫点阵纹理，`x / y` 是遮罩中心。
+- `Glow`：极光色场（紫 / 蓝 / 粉三团柔光），`opacity` 默认 0.85，传 `live` 才会缓慢呼吸。
+- `Panel`：白色玻璃卡片，`glow` 为主角卡（极光渐变描边 + 紫色投影）。
+- `Title` / `Heading` / `Eyebrow` / `Footer`：大标题（渐变字）/ 页面标题 / 胶囊眉标（紫色描边 + 白底 + 带光圈的圆点）/ 页脚（`aurora` 紫色前缀 + 路径 + 页码）。
+- `Window`：深色产品窗口，60 px 标题栏 + 三个灰色圆点 + 居中等宽标题，渐变描边 + 紫色投影，是浅色页面上唯一的深色块。
 
 ```tsx
 const styles = `
 @keyframes au-rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes au-fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes au-glow { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+@keyframes au-glow { 0%, 100% { opacity: 0.75; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1.04); } }
 @keyframes au-flow { from { stroke-dashoffset: 48; } to { stroke-dashoffset: 0; } }
 @keyframes au-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
 `;
@@ -86,17 +99,27 @@ const SANS =
 const MONO = '"SF Mono", SFMono-Regular, Menlo, Consolas, "PingFang SC", "Microsoft YaHei", monospace';
 
 const C = {
-  bg: '#09090B',
-  surface: '#111114',
-  surfaceHi: '#18181C',
-  line: 'rgba(255,255,255,0.10)',
-  text: '#FAFAFA',
-  body: '#BDBDC6',
-  meta: '#A1A1AA',
-  faint: '#52525B',
-  accent: '#A78BFA',
-  accentHi: '#C4B5FD',
-  accentSoft: 'rgba(167,139,250,0.14)',
+  bg: '#FAF9FE',
+  surface: '#F6F4FC',
+  surfaceHi: '#FFFFFF',
+  line: 'rgba(24,24,27,0.09)',
+  text: '#18181B',
+  body: '#3F3F46',
+  meta: '#5C5C66',
+  faint: '#A1A1AA',
+  accent: '#7C3AED',
+  accentHi: '#6D28D9',
+  accentSoft: 'rgba(124,58,237,0.10)',
+  fieldViolet: '#B9A2FF',
+  fieldBlue: '#9CC4FF',
+  fieldPink: '#FBB6E0',
+  ink: '#111116',
+  inkHi: '#1E1C28',
+  inkText: '#FAFAFA',
+  inkBody: '#C9C9D1',
+  inkMeta: '#A1A1AA',
+  inkAccent: '#C4B5FD',
+  inkSoft: 'rgba(167,139,250,0.20)',
 };
 
 const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
@@ -119,14 +142,14 @@ const pageBase: CSSProperties = {
   overflow: 'hidden',
 };
 
-// 点阵纹理：从光晕处向四周淡出
+// 点阵纹理：淡墨紫色小点，从色场处向四周淡出
 const DotGrid = ({ x = '50%', y = '40%' }: { x?: string; y?: string }) => (
   <div
     aria-hidden
     style={{
       position: 'absolute',
       inset: 0,
-      backgroundImage: 'radial-gradient(rgba(255,255,255,0.16) 1.2px, transparent 1.2px)',
+      backgroundImage: 'radial-gradient(rgba(76,29,149,0.18) 1.2px, transparent 1.2px)',
       backgroundSize: '32px 32px',
       maskImage: `radial-gradient(ellipse 60% 70% at ${x} ${y}, #000 0%, transparent 100%)`,
       WebkitMaskImage: `radial-gradient(ellipse 60% 70% at ${x} ${y}, #000 0%, transparent 100%)`,
@@ -135,11 +158,12 @@ const DotGrid = ({ x = '50%', y = '40%' }: { x?: string; y?: string }) => (
   />
 );
 
+// 极光色场：紫 / 蓝 / 粉三团柔光叠成的网格渐变，放在主体背后
 const Glow = ({
   x = '50%',
   y = '50%',
   size = 1100,
-  opacity = 0.32,
+  opacity = 0.85,
   live = false,
 }: {
   x?: string;
@@ -155,18 +179,18 @@ const Glow = ({
       left: x,
       top: y,
       width: size,
-      height: size,
+      height: size * 0.8,
       transform: 'translate(-50%, -50%)',
-      background: 'radial-gradient(circle, rgba(139,92,246,0.9) 0%, rgba(124,58,237,0.35) 30%, transparent 65%)',
+      background: `radial-gradient(closest-side at 34% 42%, ${C.fieldViolet}, transparent), radial-gradient(closest-side at 70% 34%, ${C.fieldBlue}, transparent), radial-gradient(closest-side at 58% 72%, ${C.fieldPink}, transparent)`,
       opacity,
-      filter: 'blur(60px)',
+      filter: 'blur(48px)',
       pointerEvents: 'none',
-      animation: live ? 'au-glow 5s ease-in-out infinite' : undefined,
+      animation: live ? 'au-glow 6s ease-in-out infinite' : undefined,
     }}
   />
 );
 
-// 渐变描边卡片：上亮下暗的 1px 边 + 顶部内高光
+// 白色玻璃卡片：渐变描边 + 顶部内高光 + 带紫调的柔和投影
 const Panel = ({
   children,
   style,
@@ -181,12 +205,14 @@ const Panel = ({
       position: 'relative',
       borderRadius: 20,
       border: '1px solid transparent',
-      background: `linear-gradient(180deg, ${C.surfaceHi}, ${C.surface}) padding-box, linear-gradient(180deg, ${
-        glow ? 'rgba(196,181,253,0.55)' : 'rgba(255,255,255,0.18)'
-      }, rgba(255,255,255,0.05) 60%) border-box`,
+      background: `linear-gradient(180deg, ${C.surfaceHi}, ${C.surface}) padding-box, ${
+        glow
+          ? 'linear-gradient(135deg, #A78BFA, #93C5FD 50%, #F9A8D4) border-box'
+          : 'linear-gradient(160deg, rgba(124,58,237,0.28), rgba(24,24,27,0.08) 45%, rgba(24,24,27,0.10)) border-box'
+      }`,
       boxShadow: glow
-        ? 'inset 0 1px 0 rgba(255,255,255,0.08), 0 0 80px rgba(139,92,246,0.18), 0 30px 80px rgba(0,0,0,0.5)'
-        : 'inset 0 1px 0 rgba(255,255,255,0.06), 0 30px 80px rgba(0,0,0,0.45)',
+        ? 'inset 0 1px 0 #FFFFFF, 0 2px 6px rgba(24,24,27,0.04), 0 36px 80px -24px rgba(124,58,237,0.38)'
+        : 'inset 0 1px 0 #FFFFFF, 0 1px 3px rgba(24,24,27,0.05), 0 24px 60px -24px rgba(76,29,149,0.22)',
       overflow: 'hidden',
       ...style,
     }}
@@ -205,7 +231,7 @@ const Title = ({ children, style }: { children: ReactNode; style?: CSSProperties
       letterSpacing: '0.01em',
       margin: 0,
       color: C.text,
-      backgroundImage: 'linear-gradient(180deg, #FFFFFF 35%, #B9B4D6 100%)',
+      backgroundImage: 'linear-gradient(180deg, #18181B 30%, #5B21B6 100%)',
       WebkitBackgroundClip: 'text',
       backgroundClip: 'text',
       WebkitTextFillColor: 'transparent',
@@ -241,8 +267,9 @@ const Eyebrow = ({ children, style }: { children: ReactNode; style?: CSSProperti
       gap: 12,
       padding: '10px 20px',
       borderRadius: 999,
-      border: '1px solid rgba(167,139,250,0.35)',
-      background: 'rgba(167,139,250,0.08)',
+      border: '1px solid rgba(124,58,237,0.30)',
+      background: 'rgba(255,255,255,0.75)',
+      boxShadow: '0 6px 20px -8px rgba(124,58,237,0.35)',
       fontFamily: MONO,
       fontSize: 20,
       letterSpacing: '0.12em',
@@ -252,7 +279,13 @@ const Eyebrow = ({ children, style }: { children: ReactNode; style?: CSSProperti
   >
     <span
       aria-hidden
-      style={{ width: 8, height: 8, borderRadius: '50%', background: C.accent, boxShadow: `0 0 12px ${C.accent}` }}
+      style={{
+        width: 8,
+        height: 8,
+        borderRadius: '50%',
+        background: C.accent,
+        boxShadow: '0 0 0 4px rgba(124,58,237,0.16)',
+      }}
     />
     {children}
   </div>
@@ -277,7 +310,7 @@ const Footer = ({ path = '/docs' }: { path?: string }) => {
       }}
     >
       <span>
-        <span style={{ color: C.accent }}>aurora</span> {path}
+        <span style={{ color: C.accent, fontWeight: 600 }}>aurora</span> {path}
       </span>
       <span>
         {String(current).padStart(2, '0')} <span style={{ color: C.faint }}>/ {String(total).padStart(2, '0')}</span>
@@ -286,17 +319,29 @@ const Footer = ({ path = '/docs' }: { path?: string }) => {
   );
 };
 
-// 产品窗口：带三个圆点的标题栏，内容区放终端 / 代码
+// 产品窗口：全页唯一的深色元素，60 px 标题栏 + 三个圆点，渐变描边 + 紫色投影
 const Window = ({ title, children, style }: { title: string; children: ReactNode; style?: CSSProperties }) => (
-  <Panel glow style={style}>
+  <div
+    style={{
+      position: 'relative',
+      borderRadius: 20,
+      border: '1px solid transparent',
+      background: `linear-gradient(180deg, ${C.inkHi}, ${C.ink}) padding-box, linear-gradient(135deg, rgba(196,181,253,0.9), rgba(255,255,255,0.10) 45%, rgba(249,168,212,0.55)) border-box`,
+      boxShadow:
+        'inset 0 1px 0 rgba(255,255,255,0.08), 0 12px 24px -8px rgba(17,17,22,0.25), 0 48px 100px -28px rgba(91,33,182,0.55)',
+      overflow: 'hidden',
+      color: C.inkText,
+      ...style,
+    }}
+  >
     <div
       style={{
         height: 60,
         display: 'flex',
         alignItems: 'center',
         padding: '0 24px',
-        borderBottom: `1px solid ${C.line}`,
-        background: 'rgba(255,255,255,0.02)',
+        borderBottom: '1px solid rgba(255,255,255,0.10)',
+        background: 'rgba(255,255,255,0.03)',
         position: 'relative',
       }}
     >
@@ -313,20 +358,20 @@ const Window = ({ title, children, style }: { title: string; children: ReactNode
           textAlign: 'center',
           fontFamily: MONO,
           fontSize: 20,
-          color: C.meta,
+          color: C.inkMeta,
         }}
       >
         {title}
       </span>
     </div>
     {children}
-  </Panel>
+  </div>
 );
 ```
 
 ### Node（架构图节点）
 
-架构图的做法：卡片里放一个固定尺寸的相对定位容器（示例 1100×556），底下一层 `<svg>` 画连线，上面用绝对定位的 `Node` 放节点。坐标手算，连线端点正好落在节点左右边的中点。`tone="hero"` 是本页主角（紫色渐变底 + 发光），`tone="idle"` 是休眠节点（虚线边、灰字）。每条活跃连线画两层：底层 `rgba(255,255,255,0.18)` 实线，上层 `accent` 虚线 `strokeDasharray="10 14"`，`live` 时跑 `au-flow`；休眠连线只画底层。
+架构图的做法：卡片里放一个固定尺寸的相对定位容器（示例 1100×556），底下一层 `<svg>` 画连线，上面用绝对定位的 `Node` 放节点。坐标手算，连线端点正好落在节点左右边的中点。`tone="hero"` 是本页主角（实心紫靛渐变底 + 白字 + 紫色光圈和投影），`tone="idle"` 是休眠节点（虚线边、`meta` 字）。每条活跃连线画两层：底层 `rgba(24,24,27,0.16)` 实线，上层 `accent` 虚线 `strokeDasharray="10 14"`，`live` 时跑 `au-flow`；休眠连线只画底层。
 
 ```tsx
 type NodeProps = { x: number; y: number; w: number; h: number; title: string; sub: string; tone?: 'hero' | 'idle' };
@@ -348,36 +393,44 @@ const Node = ({ x, y, w, h, title, sub, tone }: NodeProps) => (
       padding: '0 22px',
       background:
         tone === 'hero'
-          ? 'linear-gradient(180deg, rgba(167,139,250,0.22), rgba(167,139,250,0.06))'
+          ? 'linear-gradient(135deg, #6D28D9, #4F46E5 60%, #7C3AED)'
           : tone === 'idle'
-            ? 'transparent'
+            ? 'rgba(255,255,255,0.5)'
             : C.surfaceHi,
       border:
         tone === 'hero'
-          ? '1px solid rgba(196,181,253,0.7)'
+          ? '1px solid rgba(255,255,255,0.35)'
           : tone === 'idle'
-            ? '1px dashed rgba(255,255,255,0.22)'
-            : '1px solid rgba(255,255,255,0.14)',
+            ? '1px dashed rgba(24,24,27,0.28)'
+            : '1px solid rgba(24,24,27,0.12)',
       boxShadow:
         tone === 'hero'
-          ? '0 0 60px rgba(139,92,246,0.45), inset 0 1px 0 rgba(255,255,255,0.15)'
-          : 'inset 0 1px 0 rgba(255,255,255,0.06)',
+          ? 'inset 0 1px 0 rgba(255,255,255,0.3), 0 0 0 8px rgba(124,58,237,0.10), 0 24px 50px -12px rgba(124,58,237,0.55)'
+          : tone === 'idle'
+            ? 'none'
+            : '0 1px 2px rgba(24,24,27,0.05), 0 10px 24px -12px rgba(76,29,149,0.20)',
     }}
   >
-    <span style={{ fontSize: tone === 'hero' ? 30 : 26, fontWeight: 600, color: tone === 'idle' ? C.meta : C.text }}>
+    <span
+      style={{
+        fontSize: tone === 'hero' ? 30 : 26,
+        fontWeight: 600,
+        color: tone === 'hero' ? '#FFFFFF' : tone === 'idle' ? C.meta : C.text,
+      }}
+    >
       {title}
     </span>
-    <span style={{ fontFamily: MONO, fontSize: 20, color: tone === 'hero' ? C.accentHi : C.meta }}>{sub}</span>
+    <span style={{ fontFamily: MONO, fontSize: 20, color: tone === 'hero' ? '#EDE9FE' : C.meta }}>{sub}</span>
   </div>
 );
 ```
 
-### 地平线光弧（结尾页）
+### 晨光地平线（结尾页）
 
-一个比画布宽得多的黑色椭圆，顶边 2px 浅紫描边，向上投两层紫色柔光。顶边放在 y≈850，保证内容在弧线上方、页脚在弧线下方的黑色里，弧线不穿过任何文字。
+一个比画布宽得多的近白椭圆，顶边 2px 紫线，向上投紫 / 蓝 / 粉三层彩色柔光（浅底上彩色投影是可见的，黑色投影不行）。顶边放在 y≈850，保证内容在弧线上方、页脚在弧线下方的近白里，弧线不穿过任何文字。
 
 ```tsx
-{/* 地平线光弧：一个巨大的黑色椭圆，顶边发紫光 */}
+{/* 晨光地平线：一个巨大的浅色椭圆，顶边紫色细线，向上投紫 / 蓝 / 粉三层彩色柔光 */}
 <div
   aria-hidden
   style={{
@@ -389,8 +442,9 @@ const Node = ({ x, y, w, h, title, sub, tone }: NodeProps) => (
     transform: 'translateX(-50%)',
     borderRadius: '50%',
     background: C.bg,
-    borderTop: '2px solid rgba(196,181,253,0.85)',
-    boxShadow: '0 -24px 80px rgba(139,92,246,0.55), 0 -120px 240px rgba(124,58,237,0.35)',
+    borderTop: '2px solid rgba(124,58,237,0.65)',
+    boxShadow:
+      '0 -16px 50px rgba(167,139,250,0.75), 0 -80px 160px rgba(147,197,253,0.6), 0 -180px 280px rgba(249,168,212,0.5)',
     ...(live ? { animation: 'au-fade 1.2s ease-out both' } : {}),
   }}
 />
@@ -402,16 +456,16 @@ const Node = ({ x, y, w, h, title, sub, tone }: NodeProps) => (
 - **所有动画都以 `useIsActivePage()` 为开关**：每页开头 `const live = useIsActivePage();`，用 `rise(live, delay)` 或 `live ? { animation: ... } : {}`。缩略图里 `live` 为 false，元素直接停在最终状态。
 - 关键帧（已在 `styles` 里）：
   - `au-rise`：文字区和主体进场，800 ms `cubic-bezier(0.22, 1, 0.36, 1)`；主体比文字晚 120–150 ms，侧栏卡片依次再晚 100 ms。
-  - `au-fade`：终端逐行出现（每行间隔 160 ms，从 400 ms 开始）、地平线光弧淡入。
-  - `au-glow`：光晕 5 s 呼吸。
+  - `au-fade`：终端逐行出现（每行间隔 160 ms，从 400 ms 开始）、地平线淡入。
+  - `au-glow`：极光色场 6 s 呼吸（透明度 + 轻微缩放，保留居中的 `translate(-50%, -50%)`）。
   - `au-flow`：架构图虚线数据流，1.6 s 线性循环，每条错开 0.2 s。
   - `au-blink`：终端末行的光标闪烁。
 
 ## 气质
 
-凌晨两点的发布会大屏：近黑画布上一层若有若无的点阵，一束紫光从主体背后透出来；主体是一扇做工精细的产品窗口或一张发光的架构图，1px 的渐变边像玻璃的切面。文字白、正文浅灰、元信息等宽，层次靠亮度和字号拉开，而不是靠颜色种类。每页都有东西可看，留白是为了衬主体，不是因为没做完。
+清晨的发布会大屏：近白画布上一层若有若无的淡紫点阵，主体背后漫开一片紫、蓝、粉交融的极光；主体是一扇做工精细的深色产品窗口，或一张托在极光上的白色玻璃架构图，1px 的渐变边像玻璃的切面，影子带一点紫。文字墨黑、正文深灰、元信息等宽，层次靠深浅和字号拉开，而不是靠颜色种类。每页都有东西可看，留白是为了衬主体，不是因为没做完。
 
-避免：浅色背景、多种强调色、红绿 diff、照片和外部图片、装饰性 emoji、直角卡片、中文斜体和负字距、比 `#A1A1AA` 更暗的可读文字、小于 26 px 的正文、内容只堆在左上角。
+避免：纯白无色场的空页、把极光色场压在正文后面、多种文字强调色（蓝 / 粉只做色场）、黑色大投影、同页两块深色面板、红绿 diff、照片和外部图片、装饰性 emoji、直角卡片、中文斜体和负字距、比 `#5C5C66` 更浅的可读文字、小于 26 px 的正文、内容只堆在左上角。
 
 ## 示例
 
@@ -435,8 +489,8 @@ const Cover: Page = () => {
   return (
     <div style={{ ...pageBase, flexDirection: 'row', alignItems: 'center', gap: 72 }}>
       <style>{styles}</style>
-      <DotGrid x="76%" y="45%" />
-      <Glow x="78%" y="30%" size={1300} live={live} />
+      <DotGrid x="30%" y="45%" />
+      <Glow x="74%" y="46%" size={1500} live={live} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 40, position: 'relative', ...rise(live) }}>
         <Eyebrow>版本发布 · v3.0</Eyebrow>
         <Title>
@@ -495,12 +549,12 @@ const Cover: Page = () => {
                 }}
               >
                 <span>
-                  {l.kind === 'cmd' && <span style={{ color: C.accent }}>$ </span>}
-                  {l.kind === 'ok' && <span style={{ color: C.accent }}>✓ </span>}
-                  {l.kind === 'link' && <span style={{ color: C.accent }}>→ </span>}
+                  {l.kind === 'cmd' && <span style={{ color: C.inkAccent }}>$ </span>}
+                  {l.kind === 'ok' && <span style={{ color: C.inkAccent }}>✓ </span>}
+                  {l.kind === 'link' && <span style={{ color: C.inkAccent }}>→ </span>}
                   <span
                     style={{
-                      color: l.kind === 'cmd' ? C.text : l.kind === 'link' ? C.accentHi : C.body,
+                      color: l.kind === 'cmd' ? C.inkText : l.kind === 'link' ? C.inkAccent : C.inkBody,
                       paddingLeft: l.kind === 'out' ? 30 : 0,
                     }}
                   >
@@ -514,20 +568,21 @@ const Cover: Page = () => {
                         height: 30,
                         marginLeft: 12,
                         verticalAlign: -5,
-                        background: C.text,
+                        background: C.inkText,
                         animation: live ? 'au-blink 1.1s step-end infinite' : undefined,
                       }}
                     />
                   )}
                 </span>
-                {l.value && <span style={{ color: l.kind === 'ok' ? C.text : C.meta }}>{l.value}</span>}
+                {l.value && <span style={{ color: l.kind === 'ok' ? C.inkText : C.inkMeta }}>{l.value}</span>}
               </div>
             ))}
           </div>
         </Window>
 
-        {/* 浮在窗口左下角的指标小卡，制造前后层次 */}
+        {/* 浮在窗口左下角的白色指标小卡，压在深色窗口上制造前后层次 */}
         <Panel
+          glow
           style={{
             position: 'absolute',
             left: -64,
@@ -543,7 +598,7 @@ const Cover: Page = () => {
             <svg width="120" height="48" viewBox="0 0 120 48" aria-hidden>
               <defs>
                 <linearGradient id="au-spark" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor={C.accent} stopOpacity="0.35" />
+                  <stop offset="0%" stopColor={C.accent} stopOpacity="0.28" />
                   <stop offset="100%" stopColor={C.accent} stopOpacity="0" />
                 </linearGradient>
               </defs>
@@ -589,26 +644,34 @@ const Node = ({ x, y, w, h, title, sub, tone }: NodeProps) => (
       padding: '0 22px',
       background:
         tone === 'hero'
-          ? 'linear-gradient(180deg, rgba(167,139,250,0.22), rgba(167,139,250,0.06))'
+          ? 'linear-gradient(135deg, #6D28D9, #4F46E5 60%, #7C3AED)'
           : tone === 'idle'
-            ? 'transparent'
+            ? 'rgba(255,255,255,0.5)'
             : C.surfaceHi,
       border:
         tone === 'hero'
-          ? '1px solid rgba(196,181,253,0.7)'
+          ? '1px solid rgba(255,255,255,0.35)'
           : tone === 'idle'
-            ? '1px dashed rgba(255,255,255,0.22)'
-            : '1px solid rgba(255,255,255,0.14)',
+            ? '1px dashed rgba(24,24,27,0.28)'
+            : '1px solid rgba(24,24,27,0.12)',
       boxShadow:
         tone === 'hero'
-          ? '0 0 60px rgba(139,92,246,0.45), inset 0 1px 0 rgba(255,255,255,0.15)'
-          : 'inset 0 1px 0 rgba(255,255,255,0.06)',
+          ? 'inset 0 1px 0 rgba(255,255,255,0.3), 0 0 0 8px rgba(124,58,237,0.10), 0 24px 50px -12px rgba(124,58,237,0.55)'
+          : tone === 'idle'
+            ? 'none'
+            : '0 1px 2px rgba(24,24,27,0.05), 0 10px 24px -12px rgba(76,29,149,0.20)',
     }}
   >
-    <span style={{ fontSize: tone === 'hero' ? 30 : 26, fontWeight: 600, color: tone === 'idle' ? C.meta : C.text }}>
+    <span
+      style={{
+        fontSize: tone === 'hero' ? 30 : 26,
+        fontWeight: 600,
+        color: tone === 'hero' ? '#FFFFFF' : tone === 'idle' ? C.meta : C.text,
+      }}
+    >
       {title}
     </span>
-    <span style={{ fontFamily: MONO, fontSize: 20, color: tone === 'hero' ? C.accentHi : C.meta }}>{sub}</span>
+    <span style={{ fontFamily: MONO, fontSize: 20, color: tone === 'hero' ? '#EDE9FE' : C.meta }}>{sub}</span>
   </div>
 );
 
@@ -625,7 +688,7 @@ const Content: Page = () => {
   return (
     <div style={{ ...pageBase, gap: 48 }}>
       <style>{styles}</style>
-      <Glow x="36%" y="62%" size={1000} opacity={0.28} live={live} />
+      <Glow x="38%" y="66%" size={1300} opacity={0.75} live={live} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24, position: 'relative', ...rise(live) }}>
         <Eyebrow>架构 · 运行时</Eyebrow>
         <Heading>一次请求，在 v3 里这样走完。</Heading>
@@ -633,14 +696,14 @@ const Content: Page = () => {
 
       <div style={{ display: 'flex', gap: 32, position: 'relative' }}>
         {/* 架构示意图 */}
-        <Panel style={{ width: 1100, height: 620, flexShrink: 0, ...rise(live, 120) }}>
+        <Panel glow style={{ width: 1100, height: 620, flexShrink: 0, ...rise(live, 120) }}>
           <div
             aria-hidden
             style={{
               position: 'absolute',
               inset: 0,
               backgroundImage:
-                'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)',
+                'linear-gradient(rgba(76,29,149,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(76,29,149,0.07) 1px, transparent 1px)',
               backgroundSize: '40px 40px',
               maskImage: 'radial-gradient(ellipse 70% 70% at 55% 55%, #000 30%, transparent 100%)',
               WebkitMaskImage: 'radial-gradient(ellipse 70% 70% at 55% 55%, #000 30%, transparent 100%)',
@@ -681,7 +744,7 @@ const Content: Page = () => {
                 'M770 278 C 805 278, 805 444, 840 444',
               ].map((d, i) => (
                 <g key={d}>
-                  <path d={d} fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="2" />
+                  <path d={d} fill="none" stroke="rgba(24,24,27,0.16)" strokeWidth="2" />
                   {i !== 4 && (
                     <path
                       d={d}
@@ -718,7 +781,7 @@ const Content: Page = () => {
                 color: C.meta,
               }}
             >
-              <span style={{ color: C.accentHi }}>+</span> 预热池让新 Worker 免冷启动，直接接流量
+              <span style={{ color: C.accent }}>+</span> 预热池让新 Worker 免冷启动，直接接流量
             </div>
           </div>
         </Panel>
@@ -771,7 +834,8 @@ const Closer: Page = () => {
     <div style={{ ...pageBase, alignItems: 'center', paddingTop: 80 }}>
       <style>{styles}</style>
       <DotGrid x="50%" y="30%" />
-      {/* 地平线光弧：一个巨大的黑色椭圆，顶边发紫光 */}
+      <Glow x="50%" y="58%" size={1500} opacity={0.6} live={live} />
+      {/* 晨光地平线：一个巨大的浅色椭圆，顶边紫色细线，向上投紫 / 蓝 / 粉三层彩色柔光 */}
       <div
         aria-hidden
         style={{
@@ -783,8 +847,9 @@ const Closer: Page = () => {
           transform: 'translateX(-50%)',
           borderRadius: '50%',
           background: C.bg,
-          borderTop: '2px solid rgba(196,181,253,0.85)',
-          boxShadow: '0 -24px 80px rgba(139,92,246,0.55), 0 -120px 240px rgba(124,58,237,0.35)',
+          borderTop: '2px solid rgba(124,58,237,0.65)',
+          boxShadow:
+            '0 -16px 50px rgba(167,139,250,0.75), 0 -80px 160px rgba(147,197,253,0.6), 0 -180px 280px rgba(249,168,212,0.5)',
           ...(live ? { animation: 'au-fade 1.2s ease-out both' } : {}),
         }}
       />
@@ -814,17 +879,17 @@ const Closer: Page = () => {
               style={{
                 display: 'flex',
                 padding: '0 32px',
-                background: l.sign === '+' ? C.accentSoft : l.sign === '-' ? 'rgba(255,255,255,0.03)' : 'transparent',
-                boxShadow: l.sign === '+' ? `inset 3px 0 0 ${C.accent}` : undefined,
+                background: l.sign === '+' ? C.inkSoft : l.sign === '-' ? 'rgba(255,255,255,0.03)' : 'transparent',
+                boxShadow: l.sign === '+' ? `inset 3px 0 0 ${C.inkAccent}` : undefined,
               }}
             >
-              <span style={{ width: 56, color: C.faint }}>{l.no}</span>
-              <span style={{ width: 36, color: l.sign === '+' ? C.accent : C.meta }}>{l.sign}</span>
+              <span style={{ width: 56, color: C.inkMeta, opacity: 0.6 }}>{l.no}</span>
+              <span style={{ width: 36, color: l.sign === '+' ? C.inkAccent : C.inkMeta }}>{l.sign}</span>
               <span
                 style={{
                   whiteSpace: 'pre',
                   marginLeft: l.indent ? 32 : 0,
-                  color: l.sign === '+' ? '#EDE9FE' : l.sign === '-' ? C.meta : C.body,
+                  color: l.sign === '+' ? '#EDE9FE' : l.sign === '-' ? C.inkMeta : C.inkBody,
                   textDecoration: l.sign === '-' ? 'line-through' : undefined,
                   textDecorationColor: 'rgba(161,161,170,0.6)',
                 }}
@@ -842,9 +907,10 @@ const Closer: Page = () => {
             padding: '16px 32px',
             borderRadius: 12,
             background: C.text,
-            color: C.bg,
+            color: '#FFFFFF',
             fontSize: 26,
             fontWeight: 600,
+            boxShadow: '0 14px 30px -10px rgba(76,29,149,0.45)',
           }}
         >
           阅读升级指南 →
