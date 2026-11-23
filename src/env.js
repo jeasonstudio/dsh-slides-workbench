@@ -16,11 +16,6 @@ export function templateDir() {
   return join(packageRoot(), 'template')
 }
 
-/** Skill 正文目录。 */
-export function skillsDir() {
-  return join(packageRoot(), 'skills')
-}
-
 /** $DSH_HOME，和 Harness 其它插件保持同一个约定。 */
 export function dshHome(env = process.env) {
   return env.DSH_HOME || join(homedir(), '.dsh')

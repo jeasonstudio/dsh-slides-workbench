@@ -191,6 +191,20 @@ export class Workspace {
   }
 
   /**
+   * 老版本工作台写的 AGENTS.md 让模型用 slides_* 工具，这些工具已经换成 agent preset 里的技能 + 文件工具。
+   * 只替换带 `slides_` 的旧版，用户自己写的 AGENTS.md 不动。
+   * @returns {Promise<boolean>} 是否替换过。
+   */
+  async ensureAgents() {
+    const current = await readFile(this.path('AGENTS.md'), 'utf8').catch(() => null)
+    if (current === null || !current.includes('`slides_')) return false
+    const wanted = await readFile(join(templateDir(), 'AGENTS.md'), 'utf8').catch(() => '')
+    if (!wanted) return false
+    await writeFile(this.path('AGENTS.md'), wanted, 'utf8')
+    return true
+  }
+
+  /**
    * 工作区现状：是否初始化、依赖是否装好、open-slide 版本、安装进度。
    * @returns {Promise<{path: string, scaffolded: boolean, installed: boolean, version: string|null, install: {status: string, log: string[], error: string|null}}>}
    */
@@ -239,6 +253,7 @@ export class Workspace {
     }
     // 老工作区的配置可能缺 base：统一刷新一次（这个文件由工作台维护）
     if (await this.ensureConfig()) created.push('open-slide.config.ts（已更新）')
+    if (await this.ensureAgents()) created.push('AGENTS.md（已更新）')
     return { created }
   }
 

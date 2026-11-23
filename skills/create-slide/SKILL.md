@@ -89,7 +89,7 @@ If the dev server is already running, screenshot each page through the preview r
 Tell the user:
 
 - The slide id and file path you created.
-- That the workbench hot-reloads — the slide shows up in the Slides panel in the DSH sidebar (call `slides_present` for its URL).
+- That the workbench hot-reloads — the slide shows up in the Slides workbench in DSH within a few seconds.
 - If you wrote speaker notes: that they live in the slide's `notes` export and show up in the viewer's notes drawer and the presenter view in present mode.
 - If dev isn't running: ask the user to open the Slides panel in the DSH sidebar — it starts the dev server.
 

@@ -12,5 +12,10 @@
 
 ## 在 DeepSeek Harness 里
 
-优先用插件的 `slides_*` 工具（`slides_status`、`slides_list`、`slides_create_deck`、
-`slides_write_deck` …），并在写页面前先读 `slide-authoring` skill。
+- 当前目录就是工作区，直接用文件工具读写 `slides/<id>/index.tsx`、`themes/`。
+- 写页面前先加载 `slide-authoring` skill；从零做一个 deck 按 `create-slide`，做主题按 `create-theme`。
+- 用户说「这一页 / 这个 / 当前 deck」时，先读 `node_modules/.open-slide/current.json`
+  （他正在看的 deck、第几页、选中了什么），细节见 `current-slide` skill。
+- dev server 由工作台负责：不要自己启动，不要跑 `npm` 命令。新建的 `slides/<id>/index.tsx`
+  几秒内会自动出现在工作台里，写完告诉用户在工作台里看即可。
+- 删 deck 先和用户确认，然后把目录移到 `.trash/`，不要直接删除。

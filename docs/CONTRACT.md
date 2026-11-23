@@ -11,7 +11,7 @@ present 模式 / HTML·PDF·PPTX 导出。我们**不重写渲染**，而是：
   `@open-slide/core`），按需起 `open-slide dev`；
 - 浏览器侧工作台把 dev server 的页面用 iframe 嵌进 DSH 面板（干净预览路由 / 完整编辑器路由），
   自己只做 deck 列表、页面导航、演示、导出这些外框；
-- Host 注册 agent tools + skill，让模型能在 DSH 会话里建 deck、写页面、加讲稿、构建导出。
+- 插件带一个 `slides-workbench` agent preset（open-slide 技能 + 工作区规则），工作台里的对话会话用它建 deck、写页面、加讲稿。
 
 ## 目录与文件归属
 
@@ -20,7 +20,7 @@ present 模式 / HTML·PDF·PPTX 导出。我们**不重写渲染**，而是：
 | `package.json` `cordis.patch.yml` `scripts/build.mjs` | Lead（已写） | 打包与安装 |
 | `locale/*.json` `icon.svg` `README.md` `template/**` | Lead | 显示元数据、工作区模板 |
 | `src/host.js` `src/workspace.js` `src/decks.js` `src/preview.js` `src/env.js` | Lead | HTTP 路由、工作区、deck 解析、dev server 守护 |
-| `src/tools.js` `src/skills.js` `skills/*.md` | **teammate: tools-skills** | agent 工具与 skill |
+| `cordis.patch.yml` 里的 preset、`skills/**`、`template/AGENTS.md` | **teammate: tools-skills** | agent preset、skill 与工作区规则 |
 | `client/index.jsx` `client/*.jsx` `client/*.js` `client/styles.css` | **teammate: client-ui** | 面板 UI |
 | `dist/client.js` | 构建产物 | `npm run build` |
 
@@ -137,46 +137,31 @@ export class DevServer {
 ## Host 自动引导（不需要手动初始化）
 
 `apply()` 里调用 `bootstrap()`：`scaffold()` / `ensureConfig()` → 缺依赖就 `installDeps()`，
-全在后台跑，面板轮询 `/state` 看 `workspace.install`。deck 增删后 Host 会 `dev.restart()`
+全在后台跑，面板轮询 `/state` 看 `workspace.install`。deck 增删后（接口或模型直接写文件）Host 会 `dev.restart()`
 让 dev server 重新扫 `slides/`（open-slide 的清单是启动时生成的）。
 
 `open-slide.config.ts` 由工作台维护（`ensureConfig()` 会按模板覆盖），里面把 `base` 指到
 `/slides-workbench/app/`；`workspace.build()` 构建期间临时换成 `/`，结束后恢复，
 保证 `dist/` 能部署在静态托管根路径。
 
-## Agent 工具与 skill（tools-skills）要求
+## Agent 侧：`slides-workbench` agent preset
 
-`src/skills.js`：`export function registerSkills(ctx)`，用 `ctx.get('skills')?.register({...})`
-注册 open-slide 官方的 5 个 skill（`skills/<name>/SKILL.md`，正文前拼上「环境映射」，`slide-authoring` 附上
-`references/*.md`；optional service，缺失时安静跳过）。下面是早期自写的两个 skill 的设计，已被官方技能取代：
+插件**不注册**任何全局工具、skill 或 system prompt。模型侧能力全部在 `cordis.patch.yml` 声明的
+`slides-workbench` agent preset 里（`@deepseek-ai/dsh-agent-preset`），只有用这个 preset 的会话能看到：
 
-- `slides-authoring`（技术参考，必读）—— 从 `skills/slides-authoring.md` 读正文：1920×1080 画布、
-  file contract（`export default [...]`、`meta`、`notes`）、常用布局与类型尺度、`Steps/Step`、
-  `MorphElement`、transition、assets、webfonts、反模式、自检清单。
-- `slides-create-deck`（工作流）—— 从 `skills/slides-create-deck.md`：先问 2–4 个关键问题（主题、
-  受众、页数、视觉方向）→ 定 id → `slides_create_deck` → 用 `slides_write_deck` 一次写完整文件 →
-  自检 → 告诉用户可以 `slides_present`。
+- preset 是 DSH standard preset 的整份拷贝（preset 没有继承，DSH 升级时对照
+  `dsh-web-app/presets/standard.patch.yml` 同步），只多一处：`dsh-skill-filesystem` 的 `customSkillDirs`
+  加上本包的 `skills/`（open-slide 官方 5 个技能，原文几乎不改，见 `skills/README.md`）。
+- 会话 cwd 就是 open-slide 工作区，模型用 standard 的文件工具直接读写 `slides/<id>/index.tsx`、
+  `themes/`、`node_modules/.open-slide/current.json`。
+- 工作区规则在工作区的 `AGENTS.md`（`template/AGENTS.md`），由 `dsh-agent-instructions` 读入。
+  老工作台写的、还在提 `slides_*` 工具的 AGENTS.md 由 `workspace.ensureAgents()` 换成模板版本。
+- 客户端建对话会话时传 `agentPreset: 'slides-workbench'`（`client/session.js` 的 `AGENT_PRESET`）；
+  记下的会话跑的不是这个 preset（列表项 `projectionValues.agentPreset`）就换一段新的。
+- 模型直接建 / 删 `slides/<id>/` 不经过接口，Host 每 1.5s 看一次 `slides/` 下带 `index.tsx` 的目录集合，
+  变了就清 deck 缓存并让 dev server 重扫（接口里的建 / 删走同一个 `syncSlides()`，只重启一次）。
 
-`src/tools.js`：`export function registerTools(ctx, { workspace, decks, dev })`，注册（全部带
-`output.schema` 与 `output.render`，返回纯文本；`parameters` 是 JSON Schema 对象）：
-
-| 工具 | 参数 | 行为 |
-| --- | --- | --- |
-| `slides_status` | `{}` | 工作区路径、依赖是否装好、dev server URL、deck 列表摘要 |
-| `slides_list` | `{ "full"?: boolean }` | deck 列表（id/title/pages/updatedAt） |
-| `slides_read_deck` | `{ "id": string }` | 返回 `index.tsx` 全文 |
-| `slides_create_deck` | `{ "title": string, "id"?: string }` | 建 deck，返回 id 与文件路径 |
-| `slides_write_deck` | `{ "id": string, "source": string }` | 覆盖写，返回页数/校验告警 |
-| `slides_delete_deck` | `{ "id": string }` | 删除（移到 .trash） |
-| `slides_present` | `{ "id"?: string }` | 确保 dev server 在跑，返回预览 URL 与面板提示 |
-| `slides_build` | `{}` | 构建静态站，返回 dist 路径 |
-
-另注册一段 system prompt（`ctx.get('systemPrompt')?.section({ name:'plugin:slides-workbench',
-order: 0 … })`，order 用 `getSectionOrder` 拿不到就写 `500`）：工作区在哪、deck 是 open-slide 的
-`slides/<id>/index.tsx`、写页面前先看 `slide-authoring` skill、不要碰 `package.json`。
-
-另有 `slides_context` / `slides_themes` / `slides_write_theme`（读 `current.json`、读写 `themes/`），
-以及 `POST /slides-workbench/themes/sync`（内置官方模板合并进工作区）和 `POST /slides-workbench/reveal`
+另有 `POST /slides-workbench/themes/sync`（内置官方模板合并进工作区）和 `POST /slides-workbench/reveal`
 （在系统文件管理器里打开工作区）。
 
 ## 构建与验证

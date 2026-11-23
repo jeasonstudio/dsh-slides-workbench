@@ -6,6 +6,8 @@
 
 const services = { sessions: null, workspaces: null }
 const STORE_KEY = 'slides-workbench.chat.sessions'
+/** 对话会话用的 agent preset（cordis.patch.yml 里声明）：open-slide 的技能只在它里面。 */
+export const AGENT_PRESET = 'slides-workbench'
 
 let byDeck = readStored()
 let available = false
@@ -74,7 +76,7 @@ export async function ensureWorkspace(path) {
 
 async function createFor(deckId, workspacePath, title) {
   const workspaceId = await ensureWorkspace(workspacePath)
-  const id = await services.sessions.create({ workspaceId })
+  const id = await services.sessions.create({ workspaceId, agentPreset: AGENT_PRESET })
   assign(deckId, id)
   if (title) {
     services.sessions.using(id, { source: 'controllerOperation' }, async (reference) => {
@@ -86,14 +88,25 @@ async function createFor(deckId, workspacePath, title) {
 }
 
 /**
- * 这个 deck 的对话会话：之前开过、DSH 还列着就接着用，否则新建一个（同一 deck 并发调用只建一次）。
+ * 记下的会话还能不能接着用：DSH 还列着它，并且跑的是工作台的 preset。
+ * 改用 preset 之前建的会话跑的是 standard，没有 open-slide 技能，preset 开始对话后也不能再切，只能换一段新的。
+ * preset 记在会话的 agentPreset 投影里，列表项的 projectionValues 带着它。
+ * @param {object|undefined} summary - DSH 会话列表里的这一项。
+ * @returns {boolean} 能否复用。
+ */
+export function reusable(summary) {
+  return summary?.projectionValues?.agentPreset === AGENT_PRESET
+}
+
+/**
+ * 这个 deck 的对话会话：之前开过、DSH 还列着且是工作台 preset 就接着用，否则新建一个（同一 deck 并发调用只建一次）。
  * @param {{deckId: string, workspacePath: string, title?: string}} options - deck、工作区、会话标题。
  * @returns {Promise<string>} 会话 id。
  */
 export function ensureChat({ deckId, workspacePath, title }) {
   if (!available) return Promise.reject(new Error('DSH session services are unavailable'))
   const known = byDeck[deckId]
-  if (known && services.sessions.list?.getSnapshot?.()?.byId?.[known]) return Promise.resolve(known)
+  if (known && reusable(services.sessions.list?.getSnapshot?.()?.byId?.[known])) return Promise.resolve(known)
   if (!pending.has(deckId)) {
     pending.set(deckId, createFor(deckId, workspacePath, title).finally(() => pending.delete(deckId)))
   }

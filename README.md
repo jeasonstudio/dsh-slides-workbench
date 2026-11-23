@@ -20,7 +20,7 @@
    **外观和语言跟随 DSH 外壳**：同源还让面板能直接改 iframe 里的文档——DSH 切明/暗时把
    `html.dark` 同步进 open-slide（实时，不刷新）；DSH 切语言时写 open-slide 自己的
    `open-slide:locale`（`zh-CN` / `en`）并让它重载一次。所以不需要在两边各调一遍。
-3. **把「做 deck」这件事交给 agent** —— 注册 8 个 `slides_*` 工具和 2 个 skill，模型在会话里就能建 deck、写页面、写讲稿、构建导出。
+3. **把「做 deck」这件事交给 agent** —— 带一个 `slides-workbench` agent preset（DSH standard 预设 + open-slide 官方技能），工作台里的对话都用它，直接在工作区里建 deck、写页面、写讲稿。这些技能只在工作台的对话里出现，不打扰其他 DSH 会话。
 
 打开面板先是工作台**首页（灵感墙）**：中间一句话 + 输入框，说一句「帮我做一个关于 X 的演示」，
 它会新建 deck、打开编辑器（Agent 面板开着），并把需求发进 Agent 面板里的 DSH 对话。
@@ -77,28 +77,21 @@ plugin_manager install_bundle  →  target: <本仓库的绝对路径>
 - 外观跟 open-slide 的面板走：配色（面板底色、用户消息、输入框、发送按钮）、字体与字号（12.5px · 1.5）、圆角（8px / 5px）、
   边距（消息区 16px、输入框 12px）都用 open-slide 的规范，明暗切换时实时跟随；面板默认宽度和 Format / Design 一样（320px），拖过之后记住；
 - 首页提交需求 = 新建 deck、进编辑器时 Agent 面板开着，需求作为第一条消息发进这个 deck 的对话；
-- 「这一页 / 选中的这个」由模型调 `slides_context` 读 open-slide 的 `current.json`。
+- 「这一页 / 选中的这个」由模型读 open-slide 的 `node_modules/.open-slide/current.json`（`current-slide` skill）。
 
-**在会话里**：直接说
+**模型侧：`slides-workbench` agent preset**
+
+Agent 面板里的每段对话都用插件自带的 `slides-workbench` 预设建（在 DSH 的预设列表里叫「演示文稿工作台」，
+不用手动选）。它是 DSH standard 预设的拷贝，只多了 open-slide 的技能；会话 cwd 就是工作区，模型用普通文件工具
+直接写 `slides/<id>/index.tsx`，规则来自工作区的 `AGENTS.md`。比如在 Agent 面板里说
 
 > 帮我做一个关于灰度发布的演示，8 页，深色、克制，带讲稿。
 
 模型会先读 `slide-authoring` skill（open-slide 的 1920×1080 画布、页面契约、动效原语、反模式），
-再调工具落盘，面板里的 open-slide 会自动热更新。
+再写文件，面板里的 open-slide 自动热更新；新建的 deck 几秒内出现在列表里。
 
-| 工具 | 用途 |
-| --- | --- |
-| `slides_status` | 工作区路径、依赖状态、dev server 地址、deck 列表摘要 |
-| `slides_list` | 列出 deck（id / 标题 / 页数 / 更新时间） |
-| `slides_read_deck` | 读某个 deck 的 `index.tsx` 全文 |
-| `slides_create_deck` | 新建 deck（kebab-case id + 一页封面） |
-| `slides_write_deck` | 覆盖写 `index.tsx`，写前校验（默认导出非空、讲稿按页对齐） |
-| `slides_delete_deck` | 删除（移到工作区 `.trash/`） |
-| `slides_present` | 确保 dev server 在跑，给预览 / 编辑器地址 |
-| `slides_build` | 构建静态站到 `dist/` |
-| `slides_context` | 用户此刻在看哪个 deck、第几页、选中了什么（附 `current.json` 原文） |
-| `slides_themes` | 列出 / 读取 `themes/` 下的主题 |
-| `slides_write_theme` | 写 `themes/<id>.md` + `themes/<id>.demo.tsx` |
+> 改用预设之前建的 deck 对话跑的是 standard，没有这些技能，打开时会自动给这个 deck 换一段新对话（旧的仍在 DSH 侧栏里）。
+> 在普通 DSH 会话里不再有做 deck 的工具和技能，请到工作台里做。
 
 5 个 skill 是 open-slide 官方技能（`skills/`，与上游的差异见 `skills/README.md`）：`slide-authoring`（页面写作技术参考）、
 `create-slide`（从零做 deck）、`create-theme`（做主题）、`apply-comments`（处理编辑器里的批注）、`current-slide`（「这一页」指的是哪）。
@@ -126,7 +119,7 @@ plugin_manager install_bundle  →  target: <本仓库的绝对路径>
   - `slides/<id>/index.tsx` —— deck 源码（就是文件，随便 git 管理）
   - `slides/<id>/assets/` —— 这个 deck 的图片 / 视频 / 字体
   - `themes/` —— 跨 deck 复用的设计系统
-  - `dist/` —— `slides_build` 的产物
+  - `dist/` —— 导出静态站的产物
   - `.trash/` —— 删掉的 deck 留在这里，可以手动捞回
 - 会话：编辑器里发起的每段对话都是 DSH 自己的会话（侧栏可见，cwd 指向这个工作区）。
 - 插件不写别的地方，不需要账号或 API key：写页面用的是当前会话的模型，dev server 是本机进程。
@@ -144,12 +137,12 @@ plugin_manager install_bundle  →  target: <本仓库的绝对路径>
 **页面白屏 / 有一行红字？** 那是 `index.tsx` 真的错了 —— open-slide 把错误画在画布上。把错误贴给 AI 让它改。
 
 **Agent 面板显示「当前 DSH 没有会话服务」？** 说明这个 profile 没装 DSH 的会话界面（极少见）；
-工作台其它功能照常，可以在 DSH 自己的会话里让 AI 改 deck。
+工作台其它功能照常，可以在 DSH 里新建一个选「演示文稿工作台」预设、目录是工作区的会话，让 AI 改 deck。
 
 **能脱离 DSH 用吗？** 能。工作区就是标准 open-slide workspace，只是为了让面板嵌入，
 `open-slide.config.ts` 里的 `base` 指向 `/slides-workbench/app/`：
 `cd ~/.dsh/slides-workbench && npm run dev` 之后打开 <http://localhost:5173/slides-workbench/app/>。
-`slides_build` 会在构建时临时把 base 换回 `/`，所以 `dist/` 依然可以部署到任何静态托管的根路径。
+工作台构建（`POST /slides-workbench/build`）时会临时把 base 换回 `/`，所以 `dist/` 依然可以部署到任何静态托管的根路径。
 这个配置文件由工作台维护，**不要手改**。
 
 **远程用 DSH 时？** 面板里的 iframe 走的是 DSH 自己的同源路径（Host 上的反代），所以远程访问

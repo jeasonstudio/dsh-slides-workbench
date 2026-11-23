@@ -1,19 +1,20 @@
-// dsh-slides-workbench host 半片：/slides-workbench/* 接口、open-slide 工作区守护、agent 工具。
+// dsh-slides-workbench host 半片：/slides-workbench/* 接口、open-slide 工作区守护。
+// 模型侧能力（skill、工作区规则）由 cordis.patch.yml 里的 slides-workbench agent preset 提供，这里不注册。
 import { spawn } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { Decks } from './decks.js'
 import { packageRoot, resolveWorkspaceRoot } from './env.js'
 import { APP_PREFIX, createHttpProxy, createUpgradeProxy, DEFAULT_ROOT_ROUTES, discoverRootRoutes } from './proxy.js'
 import { DevServer } from './preview.js'
-import { registerPrompt, registerSkills } from './skills.js'
 import { OfficialThemes } from './themes.js'
-import { registerTools } from './tools.js'
 import { Workspace } from './workspace.js'
 
 const PREFIX = '/slides-workbench'
 const DECKS_CACHE_MS = 700
 const AUTO_START_RETRY_MS = 60_000
+/** 多久看一次 slides/ 里的 deck 有没有增删（agent 直接写文件，不经过接口）。 */
+const SLIDES_POLL_MS = 1500
 
 function json(res, status, body) {
   const payload = JSON.stringify(body)
@@ -127,6 +128,7 @@ export default {
     async function bootstrap() {
       const first = await workspace.status()
       if (first.scaffolded) await workspace.ensureConfig().catch(() => {})
+      if (first.scaffolded) await workspace.ensureAgents().catch(() => {})
       if (!first.scaffolded) await workspace.scaffold().catch(() => {})
       // 官方模板在后台合并进 themes/，不挡启动
       officialThemes.sync().catch(() => {})
@@ -153,6 +155,32 @@ export default {
     function rescanSlides() {
       if (dev.phase !== 'running') return
       dev.restart().catch(() => {})
+    }
+
+    /** 当前有哪些 deck：slides/ 下带 index.tsx 的目录，排好序拼成一个 key。 */
+    function slidesKey() {
+      try {
+        return readdirSync(workspace.slidesDir, { withFileTypes: true })
+          .filter(entry => entry.isDirectory() && existsSync(join(workspace.slidesDir, entry.name, 'index.tsx')))
+          .map(entry => entry.name)
+          .sort()
+          .join('\n')
+      } catch {
+        return ''
+      }
+    }
+
+    let knownSlides = slidesKey()
+    /**
+     * deck 集合变了才清缓存、让 dev server 重扫。接口和轮询都走这里，同一次增删只重启一次。
+     * agent 在会话里直接建 / 删 slides/<id>/ 时也靠它刷新首页和编辑器。
+     */
+    function syncSlides() {
+      const key = slidesKey()
+      if (key === knownSlides) return
+      knownSlides = key
+      deckCache = { at: 0, rows: [] }
+      rescanSlides()
     }
 
     /** 初始化工作区并后台装依赖（幂等；面板轮询 /state 看进度）。 */
@@ -229,13 +257,13 @@ export default {
         case 'deck/create': {
           const deck = await decks.create(body.title, body.id)
           deckCache = { at: 0, rows: [] }
-          rescanSlides()
+          syncSlides()
           return json(res, 200, { deck })
         }
         case 'deck/delete': {
           const result = await decks.remove(String(body.id ?? ''))
           deckCache = { at: 0, rows: [] }
-          rescanSlides()
+          syncSlides()
           return json(res, 200, result)
         }
         case 'themes/sync':
@@ -252,10 +280,11 @@ export default {
       }
     }
 
-    // 模型侧能力：工具、skill、system prompt。服务缺失时各自安静跳过。
-    registerTools(ctx, { workspace, decks, dev })
-    registerSkills(ctx)
-    registerPrompt(ctx, { workspace })
+    ctx.effect(() => {
+      const timer = setInterval(syncSlides, SLIDES_POLL_MS)
+      timer.unref?.()
+      return () => clearInterval(timer)
+    }, 'dsh-slides-workbench: watch slides/')
 
     ctx.effect(() => ctx.webServer.register({
       kind: 'prefix',

@@ -23,7 +23,7 @@ npm run build    # 静态站 → dist/
 
 ## 谁在写这个目录
 
-- AI（通过 DSH 的 `slides_*` 工具）负责写 `slides/<id>/index.tsx`。
+- AI（工作台 Agent 面板里的 DSH 对话，规则见 `AGENTS.md`）负责写 `slides/<id>/index.tsx`。
 - 面板负责预览、演示和导出。
 - `package.json`、`open-slide.config.ts` 由工作台管理，**不要手动改**；
   `.agents/skills/` 由 `open-slide sync:skills` 同步。
