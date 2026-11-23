@@ -262,9 +262,9 @@ function closeDock(frame) {
 
 /**
  * Agent 面板里的 DSH 对话：盖在 open-slide 停靠栏的内容区上。
- * @param {{frame: HTMLIFrameElement|null, nonce: unknown, state: object, renderSlot?: Function, SessionProvider?: Function, onDockWidth?: (width: number) => void}} props - iframe、slot 渲染能力、面板宽度回调。
+ * @param {{frame: HTMLIFrameElement|null, nonce: unknown, state: object, renderSlot?: Function, SessionProvider?: Function}} props - iframe、slot 渲染能力。
  */
-export function AgentDockChat({ frame, nonce, state, renderSlot, SessionProvider, onDockWidth }) {
+export function AgentDockChat({ frame, nonce, state, renderSlot, SessionProvider }) {
   const { rect, deckId, palette } = useAgentDock(frame, nonce)
   const { id, available } = useDeckChat(deckId)
   const reference = useSessionReference(available ? id : null)
@@ -276,11 +276,6 @@ export function AgentDockChat({ frame, nonce, state, renderSlot, SessionProvider
   // 正文排版和 open-slide Agent 面板一致（12.5px · 1.5）；颜色、字体跟着它的主题
   const textStyle = { fontSize: '12.5px', lineHeight: 1.5, fontWeight: 400, letterSpacing: 'normal', ...(palette ? { color: palette.foreground, fontFamily: palette.font } : null) }
   const tokens = dshTokens(palette)
-  const width = open ? Math.round(rect.width) : 0
-  React.useEffect(() => {
-    onDockWidth?.(width)
-  }, [width, onDockWidth])
-  React.useEffect(() => () => onDockWidth?.(0), [onDockWidth])
 
   // 面板打开时：这个 deck 之前的对话接着用，没有就开一段
   React.useEffect(() => {

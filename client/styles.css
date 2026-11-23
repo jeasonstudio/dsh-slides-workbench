@@ -57,25 +57,6 @@ body[data-ds-dark-theme] .sw-root { color-scheme: dark; --sw-soft: var(--dsw-ele
   transition: opacity .18s ease;
 }
 .sw-app-frame.is-ready { opacity: 1; }
-/* 角上两个小按钮：刷新 iframe、在浏览器里打开。不抢 open-slide 自己的工具栏。 */
-.sw-app-actions {
-  /* 竖排贴右边缘、垂直居中：不压 open-slide 底部的页面缩略图列和右上角的演示/导出 */
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 3px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--card) 78%, transparent);
-  border: .5px solid var(--line);
-  box-shadow: var(--dsw-elevation-1, 0 2px 8px rgba(0, 0, 0, .12));
-  opacity: .35;
-  transition: opacity .15s ease;
-}
-.sw-app:hover .sw-app-actions, .sw-app-actions:focus-within { opacity: 1; }
 
 /* ---------- 过渡态：加载画面 ----------
    居中一列：工作台图标 → 名称 → 进度文案 → 主题色细进度条。字号/圆角取 DTCoder token
@@ -496,4 +477,3 @@ body[data-ds-dark-theme] .sw-load-bar { background: color-mix(in srgb, var(--pri
 .sw-chat-body > * { flex: 1; min-height: 0; }
 .sw-chat-note { flex: none !important; display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0; padding: 24px; color: var(--ink3); font-size: 12.5px; line-height: 19px; text-align: center; }
 .sw-chat-note.is-error { color: var(--danger); }
-.sw-app-actions { transition: opacity .15s ease, right .2s ease; }

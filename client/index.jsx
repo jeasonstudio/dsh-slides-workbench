@@ -69,25 +69,31 @@ function Panel({ renderSlot, SessionProvider }) {
 
 export const inject = ['slots']
 
-/** 先接住宿主语言，再注册侧栏，保证第一帧的 label 就是对的。 */
+/**
+ * 语言时刻跟着 DSH 外壳：locale 服务一就绪就接上（插件 apply 时它可能还没起来，
+ * 只在 apply 那一刻 ctx.get 一次会拿不到、退回浏览器语言），之后每次切换都同步。
+ * @param {object} ctx - 客户端插件上下文。
+ */
 function followHostLocale(ctx) {
-  try {
-    const locale = ctx.get('locale')
-    if (!locale || typeof locale.getLocale !== 'function') return
-    const active = locale.getLocale()?.active
-    // active 可能是 auto/system 这类还没解析的值，setHostLang 自己会忽略
-    if (active) setHostLang(active)
-    if (typeof locale.subscribe === 'function') {
-      ctx.effect(() => {
-        const off = locale.subscribe(() => {
-          const next = locale.getLocale?.()?.active
-          if (next) setHostLang(next)
-        })
-        return () => {
-          if (typeof off === 'function') off()
-        }
-      }, 'dsh-slides-workbench: host locale')
+  const bind = (locale) => {
+    if (!locale || typeof locale.getLocale !== 'function') return () => {}
+    const sync = () => setHostLang(locale.getLocale()?.active)
+    sync()
+    const off = typeof locale.subscribe === 'function' ? locale.subscribe(sync) : null
+    return () => {
+      if (typeof off === 'function') off()
     }
+  }
+  if (typeof ctx.inject === 'function') {
+    ctx.inject(['locale'], (scope) => {
+      scope.effect(() => bind(scope.locale), 'dsh-slides-workbench: host locale')
+    })
+    return
+  }
+  // 老宿主没有 inject：退回一次性读取
+  try {
+    const locale = ctx.get?.('locale')
+    if (locale) ctx.effect(() => bind(locale), 'dsh-slides-workbench: host locale')
   } catch {
     // locale 服务不可用就按浏览器语言走
   }

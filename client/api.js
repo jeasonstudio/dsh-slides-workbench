@@ -70,7 +70,6 @@ const http = {
   server: (action) => request('server', { action }),
   createDeck: (title) => request('deck/create', { title }),
   syncThemes: () => request('themes/sync', {}),
-  reveal: () => request('reveal', {}),
 }
 
 // ---- 轮询 ----
@@ -188,23 +187,6 @@ export async function createDeck(title) {
 /** 把插件内置的官方模板合并进工作区 themes/（打开模板页时顺手做一次；失败静默）。 */
 export function syncThemes() {
   return http.syncThemes().catch(() => null)
-}
-
-/** 在系统文件管理器里打开工作区目录（Host 那台机器上）。 */
-export function revealWorkspace() {
-  http.reveal().catch((err) => toast(err.message, { error: true }))
-}
-
-/**
- * 在浏览器里单独打开当前页面：用真正的 dev server 地址（不经 DSH 反代）。
- * @param {object} state - /state 快照。
- * @param {string} route - open-slide 内部路由。
- */
-export function openExternal(state = snapshot.state, route = '') {
-  const base = serverBase(state)
-  if (!base) return
-  const path = String(route || '').replace(/^\/+/, '').replace(/\/+$/, '')
-  window.open(`${base}${APP_PREFIX}/${path}`, '_blank', 'noopener,noreferrer')
 }
 
 // ---- toast ----

@@ -51,6 +51,19 @@ div[class*="md:rounded-[10px]"][class*="bg-background"] {
 /* Agent 面板：外壳（工具栏按钮、停靠栏、拖宽）照旧，原来的内容让位给盖在上面的 DSH 原生对话
    （外层渲染，见 client/chat.jsx）；藏起来而不是删掉，免得 Tab 键焦点跑进看不见的旧输入框 */
 [data-agent-dock] > .sidebar-swap > * { visibility: hidden !important; }
+
+/* 顶层页（deck 列表、模板列表）左上角的「返回」：样子照 open-slide 编辑器左上角那个返回按钮，
+   挂在标题前面，顶替标题前那个装饰小图标 */
+#sw-back {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; margin-left: -4px; padding: 0; flex-shrink: 0;
+  border: 0; border-radius: 6px; background: transparent; color: var(--foreground);
+  cursor: pointer; transition: background-color .15s ease;
+}
+#sw-back:hover { background: var(--accent); }
+#sw-back:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+#sw-back + span[aria-hidden='true'] { display: none !important; }
+#sw-back.sw-back-float { position: fixed; left: 12px; top: 12px; z-index: 50; background: var(--background); }
 `
   doc.head?.appendChild(style)
   return true
@@ -179,6 +192,85 @@ export function watchUseThemeButton(doc, options) {
     queueMicrotask(() => {
       scheduled = false
       mountUseThemeButton(doc, options)
+    })
+  })
+  observer.observe(body, { childList: true, subtree: true })
+  return () => observer.disconnect()
+}
+
+/** open-slide 自己带返回按钮的页面：编辑器（/s/<id>…）和模板详情（/themes/<id>）。 */
+const OWN_BACK = /^\/(?:s\/[^/]+|themes\/[^/]+)(?:\/|$)/
+
+/**
+ * iframe 当前页相对 open-slide 根的路径（去掉 DSH 反代的挂载点）。
+ * @param {Document|null} doc - iframe 文档。
+ * @returns {string} 以 / 开头的路径。
+ */
+export function appPath(doc) {
+  const path = doc?.location?.pathname ?? '/'
+  const rest = path.startsWith(APP_PREFIX) ? path.slice(APP_PREFIX.length) : path
+  return rest.startsWith('/') ? rest : `/${rest}`
+}
+
+/**
+ * 这一页要不要我们补返回：open-slide 自己没有返回的顶层页（deck 列表、模板列表、素材、文件夹）才补。
+ * @param {string} path - appPath() 的结果。
+ * @returns {boolean} 是否要补。
+ */
+export function needsBack(path) {
+  return !OWN_BACK.test(path)
+}
+
+const BACK_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+  + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>'
+
+/**
+ * 顶层页左上角补一个「返回」，点了回工作台首页；有 header 就放在标题那一行最前面，没有就浮在左上角。
+ * 编辑器、模板详情页 open-slide 自己有返回，这里把按钮拿掉。
+ * @param {Document|null} doc - iframe 文档。
+ * @param {{label: string, onBack: () => void}} options - 按钮文案与回调。
+ * @returns {boolean} 当前是否挂着按钮。
+ */
+export function mountBackButton(doc, { label, onBack }) {
+  if (!doc?.body) return false
+  const old = doc.getElementById('sw-back')
+  if (!needsBack(appPath(doc))) {
+    old?.remove()
+    return false
+  }
+  const row = doc.querySelector('main header > div') ?? doc.querySelector('header > div')
+  const parent = row ?? doc.body
+  if (old && old.parentElement === parent && old.getAttribute('aria-label') === label) return true
+  old?.remove()
+  const btn = doc.createElement('button')
+  btn.id = 'sw-back'
+  btn.type = 'button'
+  btn.title = label
+  btn.setAttribute('aria-label', label)
+  btn.innerHTML = BACK_ICON
+  if (!row) btn.className = 'sw-back-float'
+  btn.addEventListener('click', () => onBack())
+  parent.insertBefore(btn, parent.firstChild)
+  return true
+}
+
+/**
+ * 盯着 iframe：换页 / 重新渲染后补上（或拿掉）「返回」。
+ * @param {Document|null} doc - iframe 文档。
+ * @param {{label: string, onBack: () => void}} options - 按钮文案与回调。
+ * @returns {() => void} 停止监听。
+ */
+export function watchBackButton(doc, options) {
+  mountBackButton(doc, options)
+  const body = doc?.body
+  if (!body || typeof MutationObserver !== 'function') return () => {}
+  let scheduled = false
+  const observer = new MutationObserver(() => {
+    if (scheduled) return
+    scheduled = true
+    queueMicrotask(() => {
+      scheduled = false
+      mountBackButton(doc, options)
     })
   })
   observer.observe(body, { childList: true, subtree: true })

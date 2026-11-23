@@ -25,6 +25,7 @@ const ZH = {
   'home.mineEmpty': '我的演示',
   'home.themes': '模板',
   'home.themeMod': '使用主题 themes/{id}（{name}）',
+  'frame.back': '返回',
   'frame.useTheme': '用这个模板',
   'home.dock': '灵感墙',
   'home.zoomIn': '放大',
@@ -50,7 +51,6 @@ const ZH = {
   'chat.close': '关闭 Agent 面板',
   'chat.unavailable': '当前 DSH 没有会话服务，无法在这里对话。',
   'chat.failed': '没能打开对话：{error}',
-  'frame.revealWorkspace': '在访达中显示工作区',
 
   'common.close': '关闭',
   'common.cancel': '取消',
@@ -81,9 +81,6 @@ const ZH = {
   'status.error': '服务器出错',
 
   'frame.title': '演示文稿工作台',
-  'frame.reload': '重新加载',
-  'frame.home': '回到首页',
-  'frame.openExternal': '在浏览器里打开',
   'error.network': '连不上 DSH，确认它还在运行，然后再试一次。',
   'error.request': '请求失败（{status}）',
 
@@ -185,6 +182,7 @@ const EN = {
   'home.mineEmpty': 'My decks',
   'home.themes': 'Templates',
   'home.themeMod': 'use theme themes/{id} ({name})',
+  'frame.back': 'Back',
   'frame.useTheme': 'Use this template',
   'home.dock': 'Inspiration wall',
   'home.zoomIn': 'Zoom in',
@@ -210,7 +208,6 @@ const EN = {
   'chat.close': 'Close the Agent panel',
   'chat.unavailable': 'This DSH has no session service, so chat is unavailable here.',
   'chat.failed': 'Could not open the chat: {error}',
-  'frame.revealWorkspace': 'Reveal workspace in Finder',
 
   'common.close': 'Close',
   'common.cancel': 'Cancel',
@@ -241,9 +238,6 @@ const EN = {
   'status.error': 'Server error',
 
   'frame.title': 'Slides workbench',
-  'frame.reload': 'Reload',
-  'frame.home': 'Back to home',
-  'frame.openExternal': 'Open in browser',
   'error.network': 'Could not reach DSH. Make sure it is still running, then try again.',
   'error.request': 'Request failed ({status})',
 
@@ -333,8 +327,13 @@ function normalize(value) {
   return tag.startsWith('zh') ? 'zh' : 'en'
 }
 
-/** 浏览器语言只是最后兜底：DSH 的语言优先。 */
+/**
+ * locale 服务接上之前的兜底：先看 DSH 写在 <html lang> 上的当前语言，再看浏览器语言。
+ * @returns {'zh'|'en'} 语言。
+ */
 function detectBrowser() {
+  const doc = typeof document === 'undefined' ? '' : document.documentElement?.lang
+  if (doc) return normalize(doc) ?? 'zh'
   if (typeof navigator === 'undefined') return 'zh'
   return normalize(navigator.language) ?? 'zh'
 }

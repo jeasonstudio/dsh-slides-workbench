@@ -1,6 +1,5 @@
 // dsh-slides-workbench host 半片：/slides-workbench/* 接口、open-slide 工作区守护。
 // 模型侧能力（skill、工作区规则）由 cordis.patch.yml 里的 slides-workbench agent preset 提供，这里不注册。
-import { spawn } from 'node:child_process'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { Decks } from './decks.js'
@@ -51,23 +50,6 @@ export function requestRejection(ctx, req) {
   const connection = ctx.get('connection')
   if (typeof connection?.requestRejection !== 'function') return 403
   return connection.requestRejection({ headers: req.headers })
-}
-
-/**
- * 在系统文件管理器里打开一个目录（Host 那台机器上）。
- * @param {string} path - 目录。
- * @returns {Promise<void>} 打开命令起来了就算成功。
- */
-export function revealPath(path) {
-  const command = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'explorer' : 'xdg-open'
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, [path], { detached: true, stdio: 'ignore' })
-    child.once('error', reject)
-    child.once('spawn', () => {
-      child.unref()
-      resolve()
-    })
-  })
 }
 
 function pluginVersion() {
@@ -268,9 +250,6 @@ export default {
         }
         case 'themes/sync':
           return json(res, 200, await officialThemes.sync())
-        case 'reveal':
-          await revealPath(workspace.root)
-          return json(res, 200, { ok: true })
         case 'build': {
           const result = await workspace.build()
           return json(res, result.ok ? 200 : 500, result)

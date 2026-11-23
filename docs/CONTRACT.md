@@ -161,8 +161,7 @@ export class DevServer {
 - 模型直接建 / 删 `slides/<id>/` 不经过接口，Host 每 1.5s 看一次 `slides/` 下带 `index.tsx` 的目录集合，
   变了就清 deck 缓存并让 dev server 重扫（接口里的建 / 删走同一个 `syncSlides()`，只重启一次）。
 
-另有 `POST /slides-workbench/themes/sync`（内置官方模板合并进工作区）和 `POST /slides-workbench/reveal`
-（在系统文件管理器里打开工作区）。
+另有 `POST /slides-workbench/themes/sync`（内置官方模板合并进工作区）。
 
 ## 构建与验证
 
