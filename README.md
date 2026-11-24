@@ -1,162 +1,188 @@
-# 演示文稿工作台 · dsh-slides-workbench
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/home-dark.webp">
+    <img src="docs/assets/home-light.webp" alt="Slides workbench home" width="100%">
+  </picture>
+</p>
 
-<p align="center"><b>DeepSeek Harness 的一个插件。侧栏里直接打开 <a href="https://open-slide.dev/docs">open-slide</a> 的演示文稿工作台：AI 写页面，你在它自己的编辑器里看、改、讲、导出。</b></p>
+<h1 align="center">Slides Workbench</h1>
 
-![在 DSH 面板里打开的 open-slide 编辑器](docs/assets/workbench-editor.jpg)
+<p align="center"><b>A DeepSeek Harness plugin that brings <a href="https://open-slide.dev/docs">open-slide</a> into the sidebar: describe a deck, the agent writes the pages, and you preview, edit, present, and export them in place.</b></p>
 
-<sub>面板里就是 open-slide 本尊：左侧页面缩略图、中间 1920×1080 画布、右侧 Format 面板、右上角 Present / Design / Export。</sub>
-
-<br>
-
-## 它是什么
-
-插件做三件事，不多也不少：
-
-1. **准备一个真正的 open-slide 工作区** —— 装好插件就自动创建 `$DSH_HOME/slides-workbench`，装一次 `@open-slide/core`。不需要点「初始化」。
-2. **把 open-slide 的页面搬进 DSH** —— 侧栏「演示文稿」打开就是 open-slide 自己的界面：deck 列表、编辑器、inspector、素材、演示模式、导出菜单。**插件不重画任何 deck UI**，只在它起来之前显示一句「正在准备」。
-
-   首页那圈属于 open-slide 自己的左侧导航（Slides / Themes / Assets / FOLDERS）会被隐藏掉，只留右侧内容；进到某个 deck 之后，编辑器的页面缩略图列照常保留。做法是 Host 把 dev server 挂在 DSH 的同源路径 `/slides-workbench/app/` 下反代（含 HMR WebSocket 和 `/__*` 接口），iframe 与面板同源，再注入一小段 CSS。
-
-   **外观和语言跟随 DSH 外壳**：同源还让面板能直接改 iframe 里的文档——DSH 切明/暗时把
-   `html.dark` 同步进 open-slide（实时，不刷新）；DSH 切语言时写 open-slide 自己的
-   `open-slide:locale`（`zh-CN` / `en`）并让它重载一次。所以不需要在两边各调一遍。
-3. **把「做 deck」这件事交给 agent** —— 带一个 `slides-workbench` agent preset（DSH standard 预设 + open-slide 官方技能），工作台里的对话都用它，直接在工作区里建 deck、写页面、写讲稿。这些技能只在工作台的对话里出现，不打扰其他 DSH 会话。
-
-打开面板先是工作台**首页（灵感墙）**：中间一句话 + 输入框，说一句「帮我做一个关于 X 的演示」，
-它会新建 deck、打开编辑器（Agent 面板开着），并把需求发进 Agent 面板里的 DSH 对话。
-
-- **卡片填充需求**：周围散落着打包在插件里的灵感卡（和本地 deck 无关）。点封面卡或想法卡，内容「打」进输入框；
-  心法卡和配色卡作为风格要求叠加在需求后面（输入框下方的小标签），按退格键移除最后一个。
-- **画布**：可拖动平移、滚轮滚动、⌘/Ctrl + 滚轮缩放；右下角缩小 / 回到中心 / 放大。窄面板时退回两列文档流。
-- **底部 dock**：按类型筛选卡片、「手气不错」随机挑一张、「模板」进 open-slide 的主题页、「我的演示」进 deck 列表。
-- **模板**：模板详情页右上角多一个「用这个模板」，点了回首页、把这个主题挂成叠加项。
-  插件内置 11 套汉化的官方模板（`themes/`），启动时和打开模板页时合并进工作区的 `themes/`：
-  改过或删掉的官方模板、与官方同名的本地模板都不会被覆盖，此后也不再同步（记录在 `themes/.official.json`）。
-
-![open-slide 的 deck 浏览页](docs/assets/workbench-decks.jpg)
-
-<sub>点开「演示文稿」首先是 open-slide 的 deck 浏览页：`+ New deck`、卡片、搜索、Newest 排序都是它自己的功能，只是左边那列导航没有了。</sub>
+<p align="center">
+  <a href="#install">Install</a> ·
+  <a href="#faq">FAQ</a> ·
+  <a href="#development">Development</a> ·
+  <a href="README.zh-CN.md">简体中文</a>
+</p>
 
 <br>
 
-## 安装
+## Overview
 
-在 DeepSeek Harness 的「插件」页里安装，或者让 AI 执行：
+The workbench is a home page plus open-slide's own editor, embedded in a DSH panel. Submit a request on the home page and the workbench creates a deck, opens the editor, and sends the request to the editor's Agent panel, which runs a native DSH conversation. The agent writes the deck file and the editor reloads as it goes.
+
+Decks are plain files in a standard open-slide workspace (`$DSH_HOME/slides-workbench` by default), so you can edit them by hand or keep them in git. The workbench follows the DSH theme and language.
+
+<br>
+
+## Home
+
+<table>
+<tr>
+<td valign="top" width="38%">
+<p><b>Cards fill the prompt</b></p>
+<p>Click a cover or idea card to put its text in the input. Craft and palette cards are appended as style requirements; press Backspace to remove the last one.</p>
+<p><b>One step to a deck</b></p>
+<p>Submitting creates a deck, opens the editor with the Agent panel open, and sends the request as the first message of that deck's conversation.</p>
+<p><b>My decks and templates</b></p>
+<p>The dock filters cards, picks one at random, and opens open-slide's deck list or theme gallery. A theme page gets a <i>Use this template</i> button that attaches the theme to your next request.</p>
+</td>
+<td>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/decks-dark.webp">
+    <img src="docs/assets/decks-light.webp" width="100%" alt="Deck list">
+  </picture>
+</td>
+</tr>
+</table>
+
+<br>
+
+## Editor
+
+<table>
+<tr>
+<td width="62%">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/editor-dark.webp">
+    <img src="docs/assets/editor-light.webp" width="100%" alt="Editor with the Agent panel">
+  </picture>
+</td>
+<td valign="top">
+<p><b>Edit</b></p>
+<p>open-slide's editor, unchanged: page thumbnails, canvas, Format and Design panels, comments, assets, and speaker notes.</p>
+<p><b>Agent panel</b></p>
+<p>The <i>Agent</i> button (or <kbd>A</kbd>) opens open-slide's right dock; its content is a native DSH conversation, one per deck. Streaming, tool calls, approvals, model selection, and context usage all come from DSH.</p>
+<p><b>Present and export</b></p>
+<p><i>Present</i> opens full-screen mode with a presenter view. The export menu produces HTML, PDF, and PPTX.</p>
+</td>
+</tr>
+</table>
+
+<br>
+
+## Install
+
+**1. Add the plugin**
+
+In DeepSeek Harness, open **Plugins** and install this package, or ask the agent:
 
 ```
-plugin_manager install_bundle  →  target: <本仓库的绝对路径>
+plugin_manager install_bundle  →  target: <absolute path to this repo>
 ```
 
-装好后侧栏出现「演示文稿」图标。**第一次装完插件就已经在准备了**：插件激活时会自己
-写工作区模板、`npm install` 装依赖，面板里能看到进度；装完直接出 open-slide 的页面。
+**2. First run**
 
-> 需要本机有 Node 20+ 和可用的 npm 源（只有第一次准备要联网，之后可以离线用）。
-> 依赖装在 `$DSH_HOME/slides-workbench/node_modules`，不碰你的项目目录。
+A **Slides** entry appears in the sidebar. On activation the plugin creates the workspace and installs `@open-slide/core`; the panel shows progress and opens the home page when done.
 
-<br>
-
-## 装好之后怎么用
-
-**在面板里**：和用 open-slide 网页版一模一样。
-
-- 「我的演示」里是 deck 卡片；点进去是编辑器，点元素能改样式，右侧 Format / Design 面板直接改源文件。
-- 右上角 `Present` 进全屏演示（方向键 / 空格翻页，`p` 开 presenter view，讲稿在旁边）。
-- 右上角导出菜单出 HTML / PDF / PPTX；`dist/` 静态站可以直接部署。
-- 返回：「我的演示」「模板」这些顶层页左上角有一个返回按钮，回到工作台首页；编辑器、模板详情页用 open-slide 自己左上角的返回回到上一层列表。
-
-**编辑器里的 Agent 面板：外壳是 open-slide 的，内容是 DSH 原生对话。**
-
-工具栏的 **Agent** 按钮、快捷键 `A`、「…」菜单里的入口、右侧停靠栏的开合与拖宽，都是 open-slide 自己的；
-面板里面换成了 DSH 的原生对话流和输入框（流式输出、工具调用、提问选项、审批、插话、模型选择、上下文用量都是 DSH 的），
-插件不自己画对话，也不再接管 open-slide 的 `/__agent` 接口（它自带的 agent 后端在 `open-slide.config.ts` 里关掉了）。
-
-- 每个 deck 一段 DSH 会话，标题是 deck 标题，归在 DSH 的 `slides-workbench` Workspace 下（cwd 就是工作区），
-  所以在 DSH 侧栏里同样能看到、继续、搜索；
-- 面板标题栏：「+」给这个 deck 开一段新对话，「×」关掉面板（和点 Agent 按钮一样）；
-- 打开面板就是这个 deck 的对话（之前聊过就接着显示；没聊过也不显示 DSH 的欢迎页，直接是消息区 + 贴底的输入框）；
-- 外观跟 open-slide 的面板走：配色（面板底色、用户消息、输入框、发送按钮）、字体与字号（12.5px · 1.5）、圆角（8px / 5px）、
-  边距（消息区 16px、输入框 12px）都用 open-slide 的规范，明暗切换时实时跟随；面板默认宽度和 Format / Design 一样（320px），拖过之后记住；
-- 首页提交需求 = 新建 deck、进编辑器时 Agent 面板开着，需求作为第一条消息发进这个 deck 的对话；
-- 「这一页 / 选中的这个」由模型读 open-slide 的 `node_modules/.open-slide/current.json`（`current-slide` skill）。
-
-**模型侧：`slides-workbench` agent preset**
-
-Agent 面板里的每段对话都用插件自带的 `slides-workbench` 预设建（在 DSH 的预设列表里叫「演示文稿工作台」，
-不用手动选）。它是 DSH standard 预设的拷贝，只多了 open-slide 的技能；会话 cwd 就是工作区，模型用普通文件工具
-直接写 `slides/<id>/index.tsx`，规则来自工作区的 `AGENTS.md`。比如在 Agent 面板里说
-
-> 帮我做一个关于灰度发布的演示，8 页，深色、克制，带讲稿。
-
-模型会先读 `slide-authoring` skill（open-slide 的 1920×1080 画布、页面契约、动效原语、反模式），
-再写文件，面板里的 open-slide 自动热更新；新建的 deck 几秒内出现在列表里。
-
-> 改用预设之前建的 deck 对话跑的是 standard，没有这些技能，打开时会自动给这个 deck 换一段新对话（旧的仍在 DSH 侧栏里）。
-> 在普通 DSH 会话里不再有做 deck 的工具和技能，请到工作台里做。
-
-5 个 skill 是 open-slide 官方技能（`skills/`，与上游的差异见 `skills/README.md`）：`slide-authoring`（页面写作技术参考）、
-`create-slide`（从零做 deck）、`create-theme`（做主题）、`apply-comments`（处理编辑器里的批注）、`current-slide`（「这一页」指的是哪）。
+Requires Node.js 20+ and a reachable npm registry for the first install. Dependencies live in the workspace's `node_modules`; your projects are not touched.
 
 <br>
 
-## 配置
+## Configuration
 
-插件行配置（`cordis.patch.yml` 里的 `config`）：
+Set in the plugin entry of the profile's `cordis.patch.yml`:
 
 ```yaml
-- insert:
-    - id: slides-workbench
-      name: 'dsh-slides-workbench'
-      config:
-        workspace: ~/Documents/decks   # 工作区位置，默认 $DSH_HOME/slides-workbench
-        port: 5173                     # open-slide dev server 起始端口，占用时自动 +1
+- id: slides-workbench
+  config:
+    workspace: ~/Documents/decks   # default: $DSH_HOME/slides-workbench
+    port: 5173                     # first port tried for the open-slide dev server
 ```
 
-<br>
+Workspace layout:
 
-## 数据在哪
-
-- 工作区：默认 `~/.dsh/slides-workbench`
-  - `slides/<id>/index.tsx` —— deck 源码（就是文件，随便 git 管理）
-  - `slides/<id>/assets/` —— 这个 deck 的图片 / 视频 / 字体
-  - `themes/` —— 跨 deck 复用的设计系统
-  - `dist/` —— 导出静态站的产物
-  - `.trash/` —— 删掉的 deck 留在这里，可以手动捞回
-- 会话：编辑器里发起的每段对话都是 DSH 自己的会话（侧栏可见，cwd 指向这个工作区）。
-- 插件不写别的地方，不需要账号或 API key：写页面用的是当前会话的模型，dev server 是本机进程。
+| Path | Content |
+| --- | --- |
+| `slides/<id>/index.tsx` | Deck source |
+| `slides/<id>/assets/` | Images, video, and fonts for one deck |
+| `themes/` | Shared design systems, including 11 bundled templates |
+| `dist/` | Static site from a build |
+| `.trash/` | Deleted decks, recoverable by hand |
 
 <br>
 
-## 常见问题
+## FAQ
 
-**面板一直显示「首次使用，正在安装 open-slide…」？** 依赖按 `template/package-lock.public.json` 用 `npm ci` 安装，
-依次尝试 npmmirror、npmjs，装完会实际加载一遍原生绑定。失败时画面上有「重试」和可展开的安装日志，日志会显示到底卡在哪一行。
+<details>
+<summary><b>What can the agent do?</b></summary>
+<br>
 
-**「预览没能启动」？** 点「重试」。dev server 只监听 `localhost`；
-如果端口被别的 Vite 占了，插件会自动往后找一个空闲端口，日志里能看到实际端口。
+Conversations in the Agent panel use the bundled `slides-workbench` agent preset: the DSH `standard` preset plus five open-slide skills — `create-slide`, `slide-authoring`, `create-theme`, `apply-comments`, and `current-slide`. The session's working directory is the workspace, and the agent edits `slides/<id>/index.tsx` with ordinary file tools. The skills are scoped to this preset and do not appear in other DSH sessions.
 
-**页面白屏 / 有一行红字？** 那是 `index.tsx` 真的错了 —— open-slide 把错误画在画布上。把错误贴给 AI 让它改。
+</details>
 
-**Agent 面板显示「当前 DSH 没有会话服务」？** 说明这个 profile 没装 DSH 的会话界面（极少见）；
-工作台其它功能照常，可以在 DSH 里新建一个选「演示文稿工作台」预设、目录是工作区的会话，让 AI 改 deck。
+<details>
+<summary><b>Where do the conversations live?</b></summary>
+<br>
 
-**能脱离 DSH 用吗？** 能。工作区就是标准 open-slide workspace，只是为了让面板嵌入，
-`open-slide.config.ts` 里的 `base` 指向 `/slides-workbench/app/`：
-`cd ~/.dsh/slides-workbench && npm run dev` 之后打开 <http://localhost:5173/slides-workbench/app/>。
-工作台构建（`POST /slides-workbench/build`）时会临时把 base 换回 `/`，所以 `dist/` 依然可以部署到任何静态托管的根路径。
-这个配置文件由工作台维护，**不要手改**。
+Each deck has its own DSH session, titled after the deck and grouped under the `slides-workbench` workspace, so it also shows up in the DSH sidebar and search. The <b>+</b> button in the panel header starts a new conversation for the current deck.
 
-**远程用 DSH 时？** 面板里的 iframe 走的是 DSH 自己的同源路径（Host 上的反代），所以远程访问
-DSH 也能看到 open-slide 页面；dev server 仍然只跑在 Host 上、只听 localhost。
+</details>
+
+<details>
+<summary><b>Will bundled templates overwrite my changes?</b></summary>
+<br>
+
+No. Bundled templates are merged into `themes/` on startup and when the template page opens. Templates you edited or deleted, and local templates with the same name, are left alone and no longer synced. The merge record is `themes/.official.json`.
+
+</details>
+
+<details>
+<summary><b>The panel is stuck on installing, or the preview fails to start</b></summary>
+<br>
+
+Dependencies install with `npm ci` from `template/package-lock.public.json`, trying npmmirror and then npmjs. On failure the panel shows <i>Retry</i> and the full install log. The dev server listens on `localhost` only; if the port is taken it moves to the next free one.
+
+</details>
+
+<details>
+<summary><b>Can I use the workspace without DSH?</b></summary>
+<br>
+
+Yes. Run `npm run dev` in the workspace and open <http://localhost:5173/slides-workbench/app/>. The `base` path in `open-slide.config.ts` is managed by the workbench, so do not edit it; builds temporarily reset it to `/`, so `dist/` deploys to any static host root.
+
+</details>
+
+<details>
+<summary><b>Does it work with remote DSH?</b></summary>
+<br>
+
+Yes. The panel loads open-slide through a same-origin reverse proxy on the DSH host (including HMR), so a remote client sees the same page. The dev server itself stays on the host's `localhost`.
+
+</details>
 
 <br>
 
-## 依赖与致谢
+## Development
 
-- [open-slide](https://open-slide.dev/docs)（MIT，© Yiwei Ho）——deck 运行时、编辑器、inspector、
-  present 模式、导出、以及 agent skills 的上游。插件不重新实现它们，只负责在本机把工作区和
-  dev server 管起来，并把页面嵌进 DSH。
-- DeepSeek Harness 的 slot / webServer / tools / skills / systemPrompt 服务。
+```bash
+npm install
+npm run build      # bundle the client into dist/client.js
+npm run watch      # rebuild on change
+npm test           # unit tests
+```
 
-## License
+| Directory | Content |
+| --- | --- |
+| `src/` | Host side: workspace and dev server management, reverse proxy, official theme sync |
+| `client/` | Panel UI (React): loading, home page, editor frame, Agent panel |
+| `skills/` | open-slide skills used by the agent preset (upstream diff in `skills/README.md`) |
+| `template/` | Workspace template and lockfile |
+| `themes/` | Bundled templates (`<id>.md` + `<id>.demo.tsx`) |
+| `cordis.patch.yml` | Plugin entry and the `slides-workbench` agent preset |
 
-MIT
+<br>
+
+<p align="center"><sub><a href="LICENSE">MIT</a> · Editor, runtime, and skills by <a href="https://open-slide.dev">open-slide</a> (MIT, © Yiwei Ho)</sub></p>
