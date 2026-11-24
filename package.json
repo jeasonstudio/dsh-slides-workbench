@@ -1,6 +1,6 @@
 {
   "name": "dsh-slides-workbench",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "DeepSeek Harness 演示文稿工作台：把 open-slide 的做 deck 能力搬进侧栏，AI 写页面，实时预览、演示与导出。",
   "type": "module",
   "main": "src/host.js",
